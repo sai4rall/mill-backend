@@ -5,6 +5,8 @@ import com.millsystem.entity.Farmer;
 import com.millsystem.entity.Mill;
 import com.millsystem.entity.PaddyPurchase;
 import com.millsystem.exception.ResourceNotFoundException;
+import com.millsystem.feature.FeatureFlagService;
+import com.millsystem.feature.FeatureKey;
 import com.millsystem.repository.FarmerRepository;
 import com.millsystem.repository.MillRepository;
 import com.millsystem.repository.PaddyPurchaseRepository;
@@ -12,6 +14,7 @@ import com.millsystem.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,9 +25,14 @@ public class PurchaseService {
     private final FarmerRepository farmerRepository;
     private final MillRepository millRepository;
     private final PaymentRepository paymentRepository;
+    private final MoistureDeductionService moistureService;
+    private final FeatureFlagService featureFlags;
 
     public PurchaseService(PaddyPurchaseRepository purchaseRepository, FarmerRepository farmerRepository,
-                           MillRepository millRepository, PaymentRepository paymentRepository) {
+                           MillRepository millRepository, PaymentRepository paymentRepository,
+                           MoistureDeductionService moistureService, FeatureFlagService featureFlags) {
+        this.moistureService = moistureService;
+        this.featureFlags = featureFlags;
         this.purchaseRepository = purchaseRepository;
         this.farmerRepository = farmerRepository;
         this.millRepository = millRepository;
@@ -57,7 +65,19 @@ public class PurchaseService {
         purchase.setPurchaseDate(dto.getPurchaseDate());
         purchase.setWeightQuintals(dto.getWeightQuintals());
         purchase.setPricePerQuintal(dto.getPricePerQuintal());
-        purchase.setTotalAmount(dto.getWeightQuintals().multiply(dto.getPricePerQuintal()));
+        // Net payable = weight × price, less the moisture deduction in effect for this mill right now.
+        // With the moisture_deduction feature off for the mill, moisture is not taken and nothing is deducted.
+        if (featureFlags.isEnabled(millId, FeatureKey.MOISTURE_DEDUCTION)) {
+            if (dto.getMoisturePct() == null) {
+                throw new IllegalArgumentException("Moisture % is required");
+            }
+            BigDecimal deduction = moistureService.deductionFor(millId, dto.getMoisturePct());
+            purchase.setMoisturePct(dto.getMoisturePct());
+            purchase.setDeductionPct(deduction);
+            purchase.setTotalAmount(netAmount(dto.getWeightQuintals(), dto.getPricePerQuintal(), deduction));
+        } else {
+            purchase.setTotalAmount(netAmount(dto.getWeightQuintals(), dto.getPricePerQuintal(), BigDecimal.ZERO));
+        }
         purchase.setTruckNumber(dto.getTruckNumber());
         purchase.setNotes(dto.getNotes());
         purchase = purchaseRepository.save(purchase);
@@ -73,5 +93,12 @@ public class PurchaseService {
         purchase = purchaseRepository.save(purchase);
         BigDecimal paid = paymentRepository.sumAmountByPurchaseId(id);
         return PurchaseDto.from(purchase, paid);
+    }
+
+    /** weight × price × (100 − deduction%) / 100, rounded to paise. */
+    static BigDecimal netAmount(BigDecimal weight, BigDecimal price, BigDecimal deductionPct) {
+        return weight.multiply(price)
+                .multiply(MoistureDeductionService.HUNDRED.subtract(deductionPct))
+                .divide(MoistureDeductionService.HUNDRED, 2, RoundingMode.HALF_UP);
     }
 }

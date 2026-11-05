@@ -1,9 +1,9 @@
 package com.millsystem.dto;
 
 import com.millsystem.entity.PaddyPurchase;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -14,7 +14,16 @@ public class PurchaseDto {
     @NotNull private LocalDate purchaseDate;
     @NotNull @Positive private BigDecimal weightQuintals;
     @NotNull @Positive private BigDecimal pricePerQuintal;
-    private BigDecimal totalAmount;
+    // Required for new purchases while the moisture_deduction feature is enabled for the mill (checked in
+    // PurchaseService); drives the deduction looked up from the moisture table.
+    @DecimalMin(value = "0.00", message = "Moisture % must be between 0 and 100")
+    @DecimalMax(value = "100.00", message = "Moisture % must be between 0 and 100")
+    @Digits(integer = 3, fraction = 2, message = "Moisture % can have at most 2 decimals")
+    private BigDecimal moisturePct;
+    private BigDecimal deductionPct;     // read-only: stored at purchase time
+    private BigDecimal grossAmount;      // read-only: weight × price
+    private BigDecimal deductionAmount;  // read-only: gross − total
+    private BigDecimal totalAmount;      // net payable after deduction
     private String truckNumber;
     private PaddyPurchase.PaymentStatus paymentStatus;
     private BigDecimal amountPaid;
@@ -27,6 +36,9 @@ public class PurchaseDto {
         dto.id = p.getId(); dto.farmerId = p.getFarmer().getId(); dto.farmerName = p.getFarmer().getName();
         dto.purchaseDate = p.getPurchaseDate(); dto.weightQuintals = p.getWeightQuintals();
         dto.pricePerQuintal = p.getPricePerQuintal(); dto.totalAmount = p.getTotalAmount();
+        dto.moisturePct = p.getMoisturePct(); dto.deductionPct = p.getDeductionPct();
+        dto.grossAmount = p.getWeightQuintals().multiply(p.getPricePerQuintal()).setScale(2, RoundingMode.HALF_UP);
+        dto.deductionAmount = dto.grossAmount.subtract(p.getTotalAmount());
         dto.truckNumber = p.getTruckNumber();
         dto.paymentStatus = p.getPaymentStatus(); dto.amountPaid = amountPaid;
         dto.amountDue = p.getTotalAmount().subtract(amountPaid);
@@ -45,6 +57,11 @@ public class PurchaseDto {
     public BigDecimal getPricePerQuintal() { return pricePerQuintal; }
     public void setPricePerQuintal(BigDecimal pricePerQuintal) { this.pricePerQuintal = pricePerQuintal; }
     public BigDecimal getTotalAmount() { return totalAmount; }
+    public BigDecimal getMoisturePct() { return moisturePct; }
+    public void setMoisturePct(BigDecimal moisturePct) { this.moisturePct = moisturePct; }
+    public BigDecimal getDeductionPct() { return deductionPct; }
+    public BigDecimal getGrossAmount() { return grossAmount; }
+    public BigDecimal getDeductionAmount() { return deductionAmount; }
     public PaddyPurchase.PaymentStatus getPaymentStatus() { return paymentStatus; }
     public void setPaymentStatus(PaddyPurchase.PaymentStatus paymentStatus) { this.paymentStatus = paymentStatus; }
     public BigDecimal getAmountPaid() { return amountPaid; }

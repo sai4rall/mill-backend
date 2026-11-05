@@ -37,11 +37,18 @@ public class Payment {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    // When the farmer's OTP confirmed this payment (null for payments recorded before OTP confirmation existed).
+    @Column(name = "otp_verified_at")
+    private LocalDateTime otpVerifiedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     public enum PaymentMode { CASH, BANK_TRANSFER, CHEQUE, UPI }
+
+    public LocalDateTime getOtpVerifiedAt() { return otpVerifiedAt; }
+    public void setOtpVerifiedAt(LocalDateTime otpVerifiedAt) { this.otpVerifiedAt = otpVerifiedAt; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

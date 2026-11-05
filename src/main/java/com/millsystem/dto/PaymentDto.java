@@ -1,5 +1,6 @@
 package com.millsystem.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.millsystem.entity.Payment;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -16,12 +17,17 @@ public class PaymentDto {
     private String referenceNumber;
     private String notes;
     private LocalDateTime createdAt;
+    private LocalDateTime otpVerifiedAt;
+    // OTP the farmer received for this exact purchase + amount (POST /api/payments/otp/send). Never returned.
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String otp;
 
     public static PaymentDto from(Payment p) {
         PaymentDto dto = new PaymentDto();
         dto.id = p.getId(); dto.purchaseId = p.getPurchase().getId(); dto.amount = p.getAmount();
         dto.paymentDate = p.getPaymentDate(); dto.paymentMode = p.getPaymentMode();
         dto.referenceNumber = p.getReferenceNumber(); dto.notes = p.getNotes(); dto.createdAt = p.getCreatedAt();
+        dto.otpVerifiedAt = p.getOtpVerifiedAt();
         return dto;
     }
 
@@ -39,4 +45,7 @@ public class PaymentDto {
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getOtpVerifiedAt() { return otpVerifiedAt; }
+    public String getOtp() { return otp; }
+    public void setOtp(String otp) { this.otp = otp; }
 }

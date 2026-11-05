@@ -1,6 +1,7 @@
 package com.millsystem.controller;
 
 import com.millsystem.dto.PaymentDto;
+import com.millsystem.dto.PaymentOtpRequest;
 import com.millsystem.security.MillContextResolver;
 import com.millsystem.security.UserPrincipal;
 import com.millsystem.service.PaymentService;
@@ -47,5 +48,16 @@ public class PaymentController {
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(paymentService.create(dto, millResolver.resolve(principal, millId)));
+    }
+
+    @PostMapping("/otp/send")
+    @Operation(summary = "Send payment OTP to the farmer",
+            description = "Sends an OTP to the farmer's verified mobile for this purchase and amount. Pass the OTP as `otp` when recording the payment.")
+    public ResponseEntity<PaymentService.PaymentOtpSent> sendOtp(
+            @Valid @RequestBody PaymentOtpRequest request,
+            @Parameter(description = "Required for SUPER_ADMIN. Ignored for MILL_ADMIN/OPERATOR.")
+            @RequestHeader(value = "X-Mill-Id", required = false) Long millId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(paymentService.sendOtp(millResolver.resolve(principal, millId), request.getPurchaseId(), request.getAmount()));
     }
 }

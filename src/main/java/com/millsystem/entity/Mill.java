@@ -30,6 +30,13 @@ public class Mill {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    // Set when a logo is uploaded (null = no logo). Also used by clients as a cache-busting version.
+    @Column(name = "logo_updated_at")
+    private LocalDateTime logoUpdatedAt;
+
+    public LocalDateTime getLogoUpdatedAt() { return logoUpdatedAt; }
+    public void setLogoUpdatedAt(LocalDateTime logoUpdatedAt) { this.logoUpdatedAt = logoUpdatedAt; }
+
     public enum MillStatus { ACTIVE, INACTIVE }
 
     public Long getId() { return id; }

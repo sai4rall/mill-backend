@@ -1,6 +1,7 @@
 package com.millsystem.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
@@ -32,6 +33,15 @@ public class Farmer {
     @Column(name = "ifsc_code")
     private String ifscCode;
 
+    // True once the current phone number has been confirmed via OTP; reset whenever the number changes.
+    @ColumnDefault("false")
+    @Column(name = "phone_verified", nullable = false)
+    private boolean phoneVerified;
+
+    // Set when a photo is uploaded (null = no photo). Also used by clients as a cache-busting version.
+    @Column(name = "photo_updated_at")
+    private LocalDateTime photoUpdatedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -52,5 +62,9 @@ public class Farmer {
     public void setBankName(String bankName) { this.bankName = bankName; }
     public String getIfscCode() { return ifscCode; }
     public void setIfscCode(String ifscCode) { this.ifscCode = ifscCode; }
+    public boolean isPhoneVerified() { return phoneVerified; }
+    public void setPhoneVerified(boolean phoneVerified) { this.phoneVerified = phoneVerified; }
+    public LocalDateTime getPhotoUpdatedAt() { return photoUpdatedAt; }
+    public void setPhotoUpdatedAt(LocalDateTime photoUpdatedAt) { this.photoUpdatedAt = photoUpdatedAt; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

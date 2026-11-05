@@ -37,6 +37,14 @@ public class PaddyPurchase {
     @Column(name = "payment_status", nullable = false)
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
+    // Moisture at purchase and the deduction % looked up from the moisture table at that time.
+    // Stored so later table changes never alter past purchases. Null on purchases made before this feature.
+    @Column(name = "moisture_pct", precision = 5, scale = 2)
+    private BigDecimal moisturePct;
+
+    @Column(name = "deduction_pct", precision = 5, scale = 2)
+    private BigDecimal deductionPct;
+
     @Column(name = "truck_number", length = 20)
     private String truckNumber;
 
@@ -48,6 +56,11 @@ public class PaddyPurchase {
     private LocalDateTime createdAt;
 
     public enum PaymentStatus { PENDING, PARTIAL, PAID }
+
+    public BigDecimal getMoisturePct() { return moisturePct; }
+    public void setMoisturePct(BigDecimal moisturePct) { this.moisturePct = moisturePct; }
+    public BigDecimal getDeductionPct() { return deductionPct; }
+    public void setDeductionPct(BigDecimal deductionPct) { this.deductionPct = deductionPct; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

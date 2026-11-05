@@ -6,11 +6,8 @@ import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
-import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.List;
 
 @Configuration
 public class OpenApiConfig {
@@ -27,17 +24,20 @@ public class OpenApiConfig {
                                 Multi-tenant Rice Mill Management System.
 
                                 **Role hierarchy:**
+                                - `DEV_ADMIN` — feature flags, mill logos, super admin accounts (no mill data)
                                 - `SUPER_ADMIN` — creates mills, manages admin accounts
                                 - `MILL_ADMIN` — full access within their mill, manages operators
                                 - `MILL_OPERATOR` — day-to-day data entry within their mill
 
                                 **Authentication:** Login via `POST /api/auth/login` to get a JWT token,
-                                then click **Authorize** and enter `Bearer <token>`.
+                                then click **Authorize** and paste the token (without the `Bearer ` prefix).
 
                                 **Default super admin:** username `superadmin` / password `Admin@123`
                                 """)
                         .contact(new Contact().name("Mill System")))
-                .servers(List.of(new Server().url("http://localhost:3001").description("Local")))
+                // No fixed server: springdoc uses the URL the docs were opened on (localhost, Railway, AWS...).
+                // Behind a proxy, X-Forwarded-Proto/Host are honoured (server.forward-headers-strategy in prod),
+                // so "Try it out" calls https://<your-domain>.
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName, new SecurityScheme()

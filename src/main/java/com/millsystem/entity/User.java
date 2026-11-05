@@ -21,8 +21,9 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    // Stored as VARCHAR (not a MySQL ENUM) so adding a role needs no schema migration.
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     private Role role;
 
     @Column(name = "full_name")
@@ -35,7 +36,8 @@ public class User {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    public enum Role { SUPER_ADMIN, MILL_ADMIN, MILL_OPERATOR }
+    // DEV_ADMIN: platform/developer account — manages feature flags, mill branding and super admins; no access to mill data.
+    public enum Role { DEV_ADMIN, SUPER_ADMIN, MILL_ADMIN, MILL_OPERATOR }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

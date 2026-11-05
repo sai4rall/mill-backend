@@ -33,6 +33,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 String username = jwtUtil.extractAllClaims(token).getSubject();
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                    if (!userDetails.isEnabled()) {
+                        // User or their mill was deactivated after the token was issued — force logout.
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"error\":\"Account or mill is inactive\"}");
+                        return;
+                    }
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

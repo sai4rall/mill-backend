@@ -1,5 +1,6 @@
 package com.millsystem.security;
 
+import com.millsystem.entity.Mill;
 import com.millsystem.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,7 +23,9 @@ public class UserPrincipal implements UserDetails {
         this.username = user.getUsername();
         this.password = user.getPassword();
         this.role = user.getRole();
-        this.active = user.isActive();
+        // A user is only usable if their own account is active and, for mill-scoped users, their mill is ACTIVE.
+        this.active = user.isActive()
+                && (user.getMill() == null || user.getMill().getStatus() == Mill.MillStatus.ACTIVE);
     }
 
     public Long getId() { return id; }
@@ -35,7 +38,7 @@ public class UserPrincipal implements UserDetails {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
     @Override public boolean isAccountNonExpired() { return true; }
-    @Override public boolean isAccountNonLocked() { return active; }
+    @Override public boolean isAccountNonLocked() { return true; }
     @Override public boolean isCredentialsNonExpired() { return true; }
     @Override public boolean isEnabled() { return active; }
 }
