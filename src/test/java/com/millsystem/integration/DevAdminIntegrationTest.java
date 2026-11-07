@@ -95,6 +95,65 @@ class DevAdminIntegrationTest {
         login("ops_super", newPassword);
     }
 
+    @Test
+    void devAdminDeactivatesAndDeletesMillsAndSuperAdminsAndResetsAnyPassword() throws Exception {
+        String dev = login("devadmin", "DevTest@123");
+        long devId = call(get("/api/dev/users"), dev, null, 200).findParents("username").stream()
+                .filter(u -> u.get("username").asText().equals("devadmin")).findFirst().orElseThrow().get("id").asLong();
+
+        JsonNode sup = call(post("/api/dev/super-admins"), dev, Map.of("username", "gone_super"), 201);
+        String supToken = login("gone_super", sup.get("generatedPassword").asText());
+        JsonNode mill = call(post("/api/admin/mills"), supToken, Map.of("name", "Doomed Mill", "adminUsername", "doomed_admin"), 201);
+        long millId = mill.get("millId").asLong();
+        String admin = login("doomed_admin", mill.get("generatedPassword").asText());
+        JsonNode op = call(post("/api/mill/operators"), admin, Map.of("username", "doomed_op"), 201);
+        call(post("/api/customers"), admin, Map.of("name", "Buyer"), 201);
+
+        // Every account is listed with its mill; no password data.
+        JsonNode all = call(get("/api/dev/users"), dev, null, 200);
+        JsonNode opRow = all.findParents("username").stream().filter(u -> u.get("username").asText().equals("doomed_op")).findFirst().orElseThrow();
+        assertThat(opRow.get("role").asText()).isEqualTo("MILL_OPERATOR");
+        assertThat(opRow.get("millName").asText()).isEqualTo("Doomed Mill");
+        assertThat(all.toString()).doesNotContain("password\"");
+
+        // Reset any password: the old session ends, the new password works; not for the dev admin's own account.
+        String opToken = login("doomed_op", op.get("generatedPassword").asText());
+        Thread.sleep(1100); // token iat has 1 s resolution
+        String newOp = call(post("/api/dev/users/" + opRow.get("id").asLong() + "/reset-password"), dev, null, 200).get("generatedPassword").asText();
+        call(get("/api/customers"), opToken, null, 401);
+        login("doomed_op", newOp);
+        call(post("/api/dev/users/" + devId + "/reset-password"), dev, null, 400);
+        call(post("/api/dev/users/999999/reset-password"), dev, null, 404);
+        call(post("/api/dev/users/" + opRow.get("id").asLong() + "/reset-password"), supToken, null, 403);
+
+        // Deactivate the mill: its users are signed out and cannot sign in; reactivate restores access.
+        call(patch("/api/dev/mills/" + millId + "/status"), dev, Map.of("status", "INACTIVE"), 200);
+        call(get("/api/customers"), admin, null, 401);
+        call(post("/api/auth/login"), null, Map.of("username", "doomed_admin", "password", mill.get("generatedPassword").asText()), 403);
+        call(patch("/api/dev/mills/" + millId + "/status"), dev, Map.of("status", "SOMETHING"), 400);
+        call(patch("/api/dev/mills/" + millId + "/status"), dev, Map.of("status", "ACTIVE"), 200);
+        admin = login("doomed_admin", mill.get("generatedPassword").asText());
+
+        // Delete the mill: needs the exact name; removes its users and data.
+        call(delete("/api/dev/mills/" + millId), dev, null, 400);
+        call(delete("/api/dev/mills/" + millId).param("confirm", "doomed mill"), dev, null, 400);
+        call(delete("/api/dev/mills/" + millId).param("confirm", "Doomed Mill"), supToken, null, 403);
+        JsonNode removed = call(delete("/api/dev/mills/" + millId).param("confirm", "Doomed Mill"), dev, null, 200);
+        assertThat(removed.get("users").asInt()).isEqualTo(2);
+        assertThat(removed.get("customers").asInt()).isEqualTo(1);
+        call(get("/api/customers"), admin, null, 401);
+        call(post("/api/auth/login"), null, Map.of("username", "doomed_op", "password", newOp), 401);
+        assertThat(call(get("/api/dev/mills"), dev, null, 200).findValuesAsText("millName")).doesNotContain("Doomed Mill");
+        call(delete("/api/dev/mills/" + millId).param("confirm", "Doomed Mill"), dev, null, 404);
+
+        // Delete a super admin: their session stops working; only super admins can be deleted this way.
+        long supId = sup.get("id").asLong();
+        call(delete("/api/dev/super-admins/" + devId), dev, null, 404);
+        call(delete("/api/dev/super-admins/" + supId), dev, null, 204);
+        call(get("/api/admin/mills"), supToken, null, 401);
+        assertThat(call(get("/api/dev/super-admins"), dev, null, 200).findValuesAsText("username")).doesNotContain("gone_super");
+    }
+
     private MockMultipartHttpServletRequestBuilder upload(long millId, MockMultipartFile file, String token) {
         MockMultipartHttpServletRequestBuilder req = multipart("/api/dev/mills/{id}/logo", millId).file(file);
         req.with(r -> { r.setMethod("PUT"); return r; });

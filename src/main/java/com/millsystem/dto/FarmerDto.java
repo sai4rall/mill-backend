@@ -25,6 +25,9 @@ public class FarmerDto {
             message = "Name can contain only letters, spaces and . ' -")
     private String name;
 
+    /** FARMER, AGENT or SUPPLIER. Optional on create (defaults to FARMER); left out on update keeps the current type. */
+    private Farmer.PartyType type;
+
     private String phone;
 
     @Size(max = 500, message = "Address must be at most 500 characters")
@@ -50,7 +53,7 @@ public class FarmerDto {
 
     public static FarmerDto from(Farmer f) {
         FarmerDto dto = new FarmerDto();
-        dto.id = f.getId(); dto.name = f.getName(); dto.phone = f.getPhone();
+        dto.id = f.getId(); dto.name = f.getName(); dto.type = f.getType(); dto.phone = f.getPhone();
         dto.address = f.getAddress(); dto.bankAccount = f.getBankAccount();
         dto.bankName = f.getBankName(); dto.ifscCode = f.getIfscCode(); dto.createdAt = f.getCreatedAt();
         dto.phoneVerified = f.isPhoneVerified(); dto.photoUpdatedAt = f.getPhotoUpdatedAt();
@@ -75,6 +78,8 @@ public class FarmerDto {
     public void setId(Long id) { this.id = id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = clean(name); }
+    public Farmer.PartyType getType() { return type; }
+    public void setType(Farmer.PartyType type) { this.type = type; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone == null ? null : phone.trim(); }
     public String getAddress() { return address; }

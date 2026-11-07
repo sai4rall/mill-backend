@@ -54,17 +54,18 @@ public class MoistureDeductionController {
         return ResponseEntity.ok(service.resetMill(principal.getMillId()));
     }
 
-    // ---- Global (super admin; /api/admin/** is SUPER_ADMIN-only) ----
+    // ---- Company default (super admin; /api/admin/** is SUPER_ADMIN-only) ----
 
     @GetMapping("/api/admin/moisture-deductions")
-    @Operation(summary = "Global moisture table")
-    public ResponseEntity<List<MoistureRangeDto>> getGlobal() {
-        return ResponseEntity.ok(service.getGlobal());
+    @Operation(summary = "My company's default moisture table", description = "Each super admin has their own; other companies never see it.")
+    public ResponseEntity<List<MoistureRangeDto>> getGlobal(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(service.getGlobal(principal.getId()));
     }
 
     @PutMapping("/api/admin/moisture-deductions")
-    @Operation(summary = "Replace the global moisture table (super admin)", description = "Applies to every mill without its own table.")
-    public ResponseEntity<List<MoistureRangeDto>> replaceGlobal(@RequestBody List<@jakarta.validation.Valid MoistureRangeDto> ranges) {
-        return ResponseEntity.ok(service.replaceGlobal(ranges));
+    @Operation(summary = "Replace my company's default moisture table (super admin)", description = "Applies to my mills without their own table.")
+    public ResponseEntity<List<MoistureRangeDto>> replaceGlobal(@RequestBody List<@jakarta.validation.Valid MoistureRangeDto> ranges,
+                                                                @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(service.replaceGlobal(principal.getId(), ranges));
     }
 }

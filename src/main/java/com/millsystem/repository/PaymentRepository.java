@@ -11,6 +11,7 @@ import java.util.List;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findByPurchaseIdAndMillIdOrderByPaymentDateDesc(Long purchaseId, Long millId);
+    List<Payment> findByMillIdOrderByPaymentDateDescIdDesc(Long millId);
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.purchase.id = :purchaseId")
     BigDecimal sumAmountByPurchaseId(Long purchaseId);

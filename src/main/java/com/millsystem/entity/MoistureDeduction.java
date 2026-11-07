@@ -4,8 +4,9 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 /**
- * One moisture band and its price deduction. {@code mill == null} is the global (super admin) table;
- * otherwise the row belongs to a mill's own table, which fully replaces the global one for that mill.
+ * One moisture band and its price deduction. {@code mill == null} rows are a company's default table, owned by the
+ * super admin in {@code ownerId}; otherwise the row belongs to a mill's own table, which fully replaces the company
+ * default for that mill.
  * The band covers fromPct ≤ moisture < toPct; a null toPct means "and above".
  */
 @Entity
@@ -19,6 +20,10 @@ public class MoistureDeduction {
     @JoinColumn(name = "mill_id")
     private Mill mill;
 
+    /** Company default rows only: the owning super admin's user id. */
+    @Column(name = "owner_id")
+    private Long ownerId;
+
     @Column(name = "from_pct", nullable = false, precision = 5, scale = 2)
     private BigDecimal fromPct;
 
@@ -31,6 +36,8 @@ public class MoistureDeduction {
     public Long getId() { return id; }
     public Mill getMill() { return mill; }
     public void setMill(Mill mill) { this.mill = mill; }
+    public Long getOwnerId() { return ownerId; }
+    public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
     public BigDecimal getFromPct() { return fromPct; }
     public void setFromPct(BigDecimal fromPct) { this.fromPct = fromPct; }
     public BigDecimal getToPct() { return toPct; }

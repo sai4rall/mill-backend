@@ -6,7 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "farmers")
+@Table(name = "farmers", indexes = @Index(name = "idx_farmer_mill_type", columnList = "mill_id, party_type"))
 public class Farmer {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,6 +18,19 @@ public class Farmer {
 
     @Column(nullable = false)
     private String name;
+
+    /**
+     * Who we buy paddy from: a farmer, an agent (buys from farmers on the mill's behalf) or a supplier (trader).
+     * Stored on its own so purchases can be reported per type (vendor-wise / agent-wise). Existing rows are farmers.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "party_type", nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'FARMER'")
+    private PartyType type = PartyType.FARMER;
+
+    public enum PartyType { FARMER, AGENT, SUPPLIER }
+
+    public PartyType getType() { return type; }
+    public void setType(PartyType type) { this.type = type == null ? PartyType.FARMER : type; }
 
     private String phone;
 

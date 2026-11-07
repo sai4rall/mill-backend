@@ -33,8 +33,10 @@ public class MillService {
         this.passwordGenerator = passwordGenerator;
     }
 
-    public List<MillDto> getAllMills() {
-        return millRepository.findAll().stream().map(mill -> {
+    /** The mills owned by this super admin (company). Other companies' mills are never listed. */
+    @Transactional(readOnly = true)
+    public List<MillDto> getAllMills(Long ownerId) {
+        return millRepository.findByOwnerIdOrderByNameAsc(ownerId).stream().map(mill -> {
             String adminUsername = userRepository.findMillAdmin(mill.getId())
                     .map(User::getUsername).orElse(null);
             return MillDto.from(mill, adminUsername);
@@ -42,8 +44,9 @@ public class MillService {
     }
 
     @Transactional
-    public CreateMillResponse createMill(CreateMillRequest request) {
+    public CreateMillResponse createMill(Long ownerId, CreateMillRequest request) {
         Mill mill = new Mill();
+        mill.setOwner(userRepository.getReferenceById(ownerId));
         String adminUsername = usernamePolicy.claim(request.getAdminUsername());
         mill.setName(request.getName());
         mill.setLocation(request.getLocation());
@@ -66,9 +69,8 @@ public class MillService {
     }
 
     @Transactional
-    public MillDto updateMill(Long id, CreateMillRequest request) {
-        Mill mill = millRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Mill not found: " + id));
+    public MillDto updateMill(Long ownerId, Long id, CreateMillRequest request) {
+        Mill mill = findOwned(ownerId, id);
         mill.setName(request.getName());
         if (request.getLocation() != null) mill.setLocation(request.getLocation());
         if (request.getContactPhone() != null) mill.setContactPhone(request.getContactPhone());
@@ -79,20 +81,26 @@ public class MillService {
     }
 
     @Transactional
-    public void toggleStatus(Long id) {
-        Mill mill = millRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Mill not found: " + id));
+    public void toggleStatus(Long ownerId, Long id) {
+        Mill mill = findOwned(ownerId, id);
         mill.setStatus(mill.getStatus() == Mill.MillStatus.ACTIVE ? Mill.MillStatus.INACTIVE : Mill.MillStatus.ACTIVE);
         millRepository.save(mill);
     }
 
     @Transactional
-    public String resetAdminPassword(Long millId) {
+    public String resetAdminPassword(Long ownerId, Long millId) {
+        findOwned(ownerId, millId);
         User admin = userRepository.findMillAdmin(millId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mill admin not found for mill: " + millId));
         String rawPassword = passwordGenerator.generate();
         admin.setPassword(passwordEncoder.encode(rawPassword));
         userRepository.save(admin);
         return rawPassword;
+    }
+
+    /** Another company's mill is reported as not found, so its existence is not revealed. */
+    private Mill findOwned(Long ownerId, Long id) {
+        return millRepository.findByIdAndOwnerId(id, ownerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Mill not found: " + id));
     }
 }

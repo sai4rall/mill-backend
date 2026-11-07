@@ -22,6 +22,7 @@ public class PaymentDto {
     private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime otpVerifiedAt;
+    private String farmerName;  // read-only, for payment lists
     // OTP the farmer received for this exact purchase + amount (POST /api/payments/otp/send). Never returned.
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String otp;
@@ -32,6 +33,7 @@ public class PaymentDto {
         dto.paymentDate = p.getPaymentDate(); dto.paymentMode = p.getPaymentMode();
         dto.referenceNumber = p.getReferenceNumber(); dto.notes = p.getNotes(); dto.createdAt = p.getCreatedAt();
         dto.otpVerifiedAt = p.getOtpVerifiedAt();
+        if (p.getPurchase().getFarmer() != null) dto.farmerName = p.getPurchase().getFarmer().getName();
         return dto;
     }
 
@@ -49,6 +51,7 @@ public class PaymentDto {
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public String getFarmerName() { return farmerName; }
     public LocalDateTime getOtpVerifiedAt() { return otpVerifiedAt; }
     public String getOtp() { return otp; }
     public void setOtp(String otp) { this.otp = otp; }

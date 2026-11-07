@@ -49,6 +49,17 @@ public class Mill {
     public LocalDateTime getLogoUpdatedAt() { return logoUpdatedAt; }
     public void setLogoUpdatedAt(LocalDateTime logoUpdatedAt) { this.logoUpdatedAt = logoUpdatedAt; }
 
+    /**
+     * The super admin (company) that owns this mill. Each super admin is a separate company: they see and manage
+     * only the mills they own. Null only for mills created before ownership existed, until a dev admin assigns one.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;
+
+    public User getOwner() { return owner; }
+    public void setOwner(User owner) { this.owner = owner; }
+
     public enum MillStatus { ACTIVE, INACTIVE }
 
     public Long getId() { return id; }

@@ -12,6 +12,8 @@ public class PurchaseDto {
     private Long id;
     @NotNull private Long farmerId;
     private String farmerName;
+    // FARMER, AGENT or SUPPLIER: who the paddy was bought from (for vendor / agent-wise reports).
+    private String farmerType;
     @NotNull @NotFutureDate(message = "Purchase date cannot be in the future") private LocalDate purchaseDate;
     @NotNull @Positive @Digits(integer = 8, fraction = 2, message = "Quantity can have at most 8 digits and 2 decimal places") private BigDecimal weightQuintals;
     @NotNull @Positive @Digits(integer = 8, fraction = 2, message = "Price can have at most 8 digits and 2 decimal places") private BigDecimal pricePerQuintal;
@@ -39,7 +41,7 @@ public class PurchaseDto {
 
     public static PurchaseDto from(PaddyPurchase p, BigDecimal amountPaid) {
         PurchaseDto dto = new PurchaseDto();
-        dto.id = p.getId(); dto.farmerId = p.getFarmer().getId(); dto.farmerName = p.getFarmer().getName();
+        dto.id = p.getId(); dto.farmerId = p.getFarmer().getId(); dto.farmerName = p.getFarmer().getName(); dto.farmerType = p.getFarmer().getType().name();
         dto.purchaseDate = p.getPurchaseDate(); dto.weightQuintals = p.getWeightQuintals();
         dto.pricePerQuintal = p.getPricePerQuintal(); dto.totalAmount = p.getTotalAmount();
         dto.moisturePct = p.getMoisturePct(); dto.deductionPct = p.getDeductionPct();
@@ -56,6 +58,7 @@ public class PurchaseDto {
     public Long getFarmerId() { return farmerId; }
     public void setFarmerId(Long farmerId) { this.farmerId = farmerId; }
     public String getFarmerName() { return farmerName; }
+    public String getFarmerType() { return farmerType; }
     public LocalDate getPurchaseDate() { return purchaseDate; }
     public void setPurchaseDate(LocalDate purchaseDate) { this.purchaseDate = purchaseDate; }
     public BigDecimal getWeightQuintals() { return weightQuintals; }

@@ -18,6 +18,7 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final FeatureFlagService featureFlagService;
+    private final TenancyMigration tenancyMigration;
 
     private static final String DEFAULT_SUPER_ADMIN_PASSWORD = "Admin@123";
     @Value("${app.super-admin.password:" + DEFAULT_SUPER_ADMIN_PASSWORD + "}")
@@ -32,10 +33,11 @@ public class DataSeeder implements CommandLineRunner {
     private final org.springframework.core.env.Environment environment;
 
     public DataSeeder(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                      FeatureFlagService featureFlagService, org.springframework.core.env.Environment environment) {
+                      FeatureFlagService featureFlagService, org.springframework.core.env.Environment environment, TenancyMigration tenancyMigration) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.featureFlagService = featureFlagService;
+        this.tenancyMigration = tenancyMigration;
         this.environment = environment;
     }
 
@@ -71,6 +73,7 @@ public class DataSeeder implements CommandLineRunner {
                     DEFAULT_SUPER_ADMIN_PASSWORD.equals(superAdminPassword) ? DEFAULT_SUPER_ADMIN_PASSWORD : "(from SUPER_ADMIN_PASSWORD)");
         }
         seedDevAdmin();
+        tenancyMigration.run();
     }
 
     /** Creates the dev admin once, like the super admin. DEV_ADMIN_PASSWORD overrides the default password. */

@@ -3,6 +3,7 @@ package com.millsystem.controller;
 import com.millsystem.dto.FeatureFlagDto;
 import com.millsystem.entity.User;
 import com.millsystem.feature.FeatureFlagService;
+import com.millsystem.security.MillContextResolver;
 import com.millsystem.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,9 +20,11 @@ import java.util.List;
 public class FeatureController {
 
     private final FeatureFlagService flags;
+    private final MillContextResolver millResolver;
 
-    public FeatureController(FeatureFlagService flags) {
+    public FeatureController(FeatureFlagService flags, MillContextResolver millResolver) {
         this.flags = flags;
+        this.millResolver = millResolver;
     }
 
     @GetMapping
@@ -33,6 +36,7 @@ public class FeatureController {
             @AuthenticationPrincipal UserPrincipal principal) {
         boolean platformUser = principal.getRole() == User.Role.SUPER_ADMIN || principal.getRole() == User.Role.DEV_ADMIN;
         Long millId = platformUser ? headerMillId : principal.getMillId();
+        if (millId != null && principal.getRole() == User.Role.SUPER_ADMIN) millResolver.requireOwned(principal, millId);
         return ResponseEntity.ok(flags.getEffective(millId));
     }
 }

@@ -32,6 +32,7 @@ public class FeatureAccessRules {
             new Rule("GET", "/api/purchases", Set.of(PURCHASES, MILL_OPERATIONS, DASHBOARD)),
             new Rule(null, "/api/purchases/**", Set.of(PURCHASES)),
             new Rule(null, "/api/payments/**", Set.of(PURCHASES)),
+            new Rule(null, "/api/rejected-lorries/**", Set.of(PURCHASES)),
             new Rule(null, "/api/moisture-deductions/**", Set.of(MOISTURE_DEDUCTION)),
 
             new Rule(null, "/api/mill-batches/**", Set.of(MILL_OPERATIONS)),

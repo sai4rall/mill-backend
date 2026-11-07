@@ -72,6 +72,7 @@ class QaRegressionIntegrationTest {
         MillCtx m = newMill();
         long p = purchase(m, 10);
         call(put("/api/purchases/" + p), m.operator(), Map.of("paymentStatus", "PAID", "notes", "trying"), 200);
+        assertThat(call(get("/api/payments"), m.operator(), null, 200)).isEmpty(); // all-payments list (Money screen)
         JsonNode after = call(get("/api/purchases/" + p), m.admin(), null, 200);
         assertThat(after.get("paymentStatus").asText()).isEqualTo("PENDING");
         assertThat(after.get("notes").asText()).isEqualTo("trying");

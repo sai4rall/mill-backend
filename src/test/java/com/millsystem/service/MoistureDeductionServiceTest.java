@@ -42,6 +42,12 @@ class MoistureDeductionServiceTest {
     private static MoistureRangeDto range(String from, String to, String deduction) {
         return new MoistureRangeDto(bd(from), bd(to), bd(deduction));
     }
+    /** Mill 4, owned by super admin (company) 1. */
+    private void millOfCompanyOne() {
+        com.millsystem.entity.User owner = new com.millsystem.entity.User(); owner.setId(1L);
+        Mill mill = new Mill(); mill.setId(4L); mill.setOwner(owner);
+        when(millRepository.findById(4L)).thenReturn(Optional.of(mill));
+    }
     private static MoistureDeduction row(String from, String to, String deduction) {
         MoistureDeduction d = new MoistureDeduction();
         d.setFromPct(bd(from)); d.setToPct(bd(to)); d.setDeductionPct(bd(deduction));
@@ -79,8 +85,9 @@ class MoistureDeductionServiceTest {
     class EffectiveTable {
         @Test
         void millTableReplacesGlobalCompletely() {
+            millOfCompanyOne();
             when(repository.findByMillIdOrderByFromPctAsc(4L)).thenReturn(List.of(row("16", null, "10")));
-            when(repository.findByMillIsNullOrderByFromPctAsc()).thenReturn(List.of(row("0", "15", "0"), row("15", null, "5")));
+            when(repository.findByMillIsNullAndOwnerIdOrderByFromPctAsc(1L)).thenReturn(List.of(row("0", "15", "0"), row("15", null, "5")));
 
             MoistureTableDto t = service.getForMill(4L);
 
@@ -93,9 +100,10 @@ class MoistureDeductionServiceTest {
         }
 
         @Test
-        void fallsBackToGlobal() {
+        void fallsBackToTheCompanyDefault() {
+            millOfCompanyOne();
             when(repository.findByMillIdOrderByFromPctAsc(4L)).thenReturn(List.of());
-            when(repository.findByMillIsNullOrderByFromPctAsc()).thenReturn(List.of(row("15", null, "5")));
+            when(repository.findByMillIsNullAndOwnerIdOrderByFromPctAsc(1L)).thenReturn(List.of(row("15", null, "5")));
             MoistureTableDto t = service.getForMill(4L);
             assertThat(t.getSource()).isEqualTo(MoistureTableDto.Source.GLOBAL);
             assertThat(service.deductionFor(4L, bd("16"))).isEqualByComparingTo("5");
@@ -103,8 +111,9 @@ class MoistureDeductionServiceTest {
 
         @Test
         void noTablesMeansNoneAndNoDeduction() {
+            millOfCompanyOne();
             when(repository.findByMillIdOrderByFromPctAsc(4L)).thenReturn(List.of());
-            when(repository.findByMillIsNullOrderByFromPctAsc()).thenReturn(List.of());
+            when(repository.findByMillIsNullAndOwnerIdOrderByFromPctAsc(1L)).thenReturn(List.of());
             assertThat(service.getForMill(4L).getSource()).isEqualTo(MoistureTableDto.Source.NONE);
             assertThat(service.deductionFor(4L, bd("30"))).isEqualByComparingTo("0");
         }
@@ -161,21 +170,21 @@ class MoistureDeductionServiceTest {
     class Saving {
         @Test
         void replacingGlobalDeletesOldRowsThenSavesSortedRows() {
-            service.replaceGlobal(List.of(range("15", null, "5"), range("0", "15", "0")));
+            service.replaceGlobal(7L, List.of(range("15", null, "5"), range("0", "15", "0")));
 
             InOrder order = inOrder(repository);
-            order.verify(repository).deleteGlobal();
+            order.verify(repository).deleteCompanyDefault(7L);
             ArgumentCaptor<MoistureDeduction> saved = ArgumentCaptor.forClass(MoistureDeduction.class);
             order.verify(repository, times(2)).save(saved.capture());
-            assertThat(saved.getAllValues()).allSatisfy(d -> assertThat(d.getMill()).isNull());
+            assertThat(saved.getAllValues()).allSatisfy(d -> { assertThat(d.getMill()).isNull(); assertThat(d.getOwnerId()).isEqualTo(7L); });
             assertThat(saved.getAllValues().get(0).getFromPct()).isEqualByComparingTo("0");
         }
 
         @Test
         void invalidTableIsRejectedBeforeAnythingIsDeleted() {
-            assertThatThrownBy(() -> service.replaceGlobal(List.of(range("0", "16", "0"), range("15", null, "5"))))
+            assertThatThrownBy(() -> service.replaceGlobal(7L, List.of(range("0", "16", "0"), range("15", null, "5"))))
                     .isInstanceOf(IllegalArgumentException.class);
-            verify(repository, never()).deleteGlobal();
+            verify(repository, never()).deleteCompanyDefault(any());
             verify(repository, never()).save(any());
         }
 
@@ -201,7 +210,6 @@ class MoistureDeductionServiceTest {
         @Test
         void resetRemovesTheMillTable() {
             when(repository.findByMillIdOrderByFromPctAsc(4L)).thenReturn(List.of());
-            when(repository.findByMillIsNullOrderByFromPctAsc()).thenReturn(List.of());
             service.resetMill(4L);
             verify(repository).deleteByMillId(4L);
         }

@@ -36,7 +36,7 @@ public class MillBrandingService {
     public List<BrandingDto> getAllMills() {
         return millRepository.findAll().stream()
                 .sorted(Comparator.comparing(Mill::getName, String.CASE_INSENSITIVE_ORDER))
-                .map(BrandingDto::from).toList();
+                .map(BrandingDto::withOwner).toList();
     }
 
     @Transactional(readOnly = true)
