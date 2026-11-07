@@ -16,8 +16,9 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Moisture-based price deductions. Super admin maintains a global table; a mill admin may define the mill's
- * own table, which then fully replaces the global one for that mill. Bands are fromPct ≤ m < toPct
+ * Moisture-based price deductions. Each super admin (company) maintains a default table for its own mills; a mill
+ * admin may define the mill's own table, which then fully replaces the company default for that mill. Companies never
+ * see or use each other's tables. Bands are fromPct ≤ m < toPct
  * (null toPct = no upper limit). Moisture outside every band — or no table at all — means no deduction.
  */
 @Service
@@ -34,15 +35,18 @@ public class MoistureDeductionService {
         this.millRepository = millRepository;
     }
 
+    /** The company default table of one super admin (empty for a mill with no owner). */
     @Transactional(readOnly = true)
-    public List<MoistureRangeDto> getGlobal() {
-        return repository.findByMillIsNullOrderByFromPctAsc().stream().map(MoistureRangeDto::from).toList();
+    public List<MoistureRangeDto> getGlobal(Long ownerId) {
+        if (ownerId == null) return List.of();
+        return repository.findByMillIsNullAndOwnerIdOrderByFromPctAsc(ownerId).stream().map(MoistureRangeDto::from).toList();
     }
 
     @Transactional(readOnly = true)
     public MoistureTableDto getForMill(Long millId) {
         List<MoistureRangeDto> mill = repository.findByMillIdOrderByFromPctAsc(millId).stream().map(MoistureRangeDto::from).toList();
-        List<MoistureRangeDto> global = getGlobal();
+        Long ownerId = millRepository.findById(millId).map(m -> m.getOwner() == null ? null : m.getOwner().getId()).orElse(null);
+        List<MoistureRangeDto> global = getGlobal(ownerId);
         if (!mill.isEmpty()) return new MoistureTableDto(MoistureTableDto.Source.MILL, mill, mill, global);
         if (!global.isEmpty()) return new MoistureTableDto(MoistureTableDto.Source.GLOBAL, global, mill, global);
         return new MoistureTableDto(MoistureTableDto.Source.NONE, List.of(), mill, global);
@@ -64,13 +68,14 @@ public class MoistureDeductionService {
                 .findFirst().orElse(BigDecimal.ZERO);
     }
 
+    /** Replaces the company default table of this super admin; it applies to their mills without their own table. */
     @Transactional
-    public List<MoistureRangeDto> replaceGlobal(List<MoistureRangeDto> ranges) {
+    public List<MoistureRangeDto> replaceGlobal(Long ownerId, List<MoistureRangeDto> ranges) {
         List<MoistureRangeDto> clean = validate(ranges);
-        repository.deleteGlobal();
+        repository.deleteCompanyDefault(ownerId);
         repository.flush();
-        save(null, clean);
-        return getGlobal();
+        save(null, ownerId, clean);
+        return getGlobal(ownerId);
     }
 
     /** Replaces the mill's own table. An empty list removes it, so the mill falls back to the global table. */
@@ -81,7 +86,7 @@ public class MoistureDeductionService {
         List<MoistureRangeDto> clean = validate(ranges);
         repository.deleteByMillId(millId);
         repository.flush();
-        save(mill, clean);
+        save(mill, null, clean);
         return getForMill(millId);
     }
 
@@ -91,10 +96,11 @@ public class MoistureDeductionService {
         return getForMill(millId);
     }
 
-    private void save(Mill mill, List<MoistureRangeDto> ranges) {
+    private void save(Mill mill, Long ownerId, List<MoistureRangeDto> ranges) {
         for (MoistureRangeDto r : ranges) {
             MoistureDeduction d = new MoistureDeduction();
             d.setMill(mill);
+            d.setOwnerId(ownerId);
             d.setFromPct(r.getFromPct());
             d.setToPct(r.getToPct());
             d.setDeductionPct(r.getDeductionPct());

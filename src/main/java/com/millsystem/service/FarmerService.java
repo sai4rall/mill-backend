@@ -159,6 +159,7 @@ public class FarmerService {
 
     private void applyFields(Farmer farmer, FarmerDto dto) {
         farmer.setName(dto.getName());
+        if (dto.getType() != null || farmer.getId() == null) farmer.setType(dto.getType());
         farmer.setAddress(dto.getAddress()); farmer.setBankAccount(dto.getBankAccount());
         farmer.setBankName(dto.getBankName()); farmer.setIfscCode(dto.getIfscCode());
     }

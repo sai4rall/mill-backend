@@ -30,13 +30,14 @@ public class PaymentController {
     }
 
     @GetMapping
-    @Operation(summary = "List payments for a purchase")
+    @Operation(summary = "List payments", description = "All payments of the mill, newest first; pass purchaseId to limit to one purchase.")
     public ResponseEntity<List<PaymentDto>> getByPurchase(
-            @RequestParam Long purchaseId,
+            @RequestParam(required = false) Long purchaseId,
             @Parameter(description = "Required for SUPER_ADMIN. Ignored for MILL_ADMIN/OPERATOR.")
             @RequestHeader(value = "X-Mill-Id", required = false) Long millId,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(paymentService.getByPurchase(purchaseId, millResolver.resolve(principal, millId)));
+        Long mill = millResolver.resolve(principal, millId);
+        return ResponseEntity.ok(purchaseId == null ? paymentService.getAll(mill) : paymentService.getByPurchase(purchaseId, mill));
     }
 
     @PostMapping

@@ -10,12 +10,17 @@ import java.util.List;
 
 @Repository
 public interface MoistureDeductionRepository extends JpaRepository<MoistureDeduction, Long> {
-    List<MoistureDeduction> findByMillIsNullOrderByFromPctAsc();
+    List<MoistureDeduction> findByMillIsNullAndOwnerIdOrderByFromPctAsc(Long ownerId);
+    List<MoistureDeduction> findByMillIsNullAndOwnerIdIsNullOrderByFromPctAsc();
     List<MoistureDeduction> findByMillIdOrderByFromPctAsc(Long millId);
 
     @Modifying
-    @Query("DELETE FROM MoistureDeduction d WHERE d.mill IS NULL")
-    void deleteGlobal();
+    @Query("DELETE FROM MoistureDeduction d WHERE d.mill IS NULL AND d.ownerId = :ownerId")
+    void deleteCompanyDefault(Long ownerId);
+
+    @Modifying
+    @Query("DELETE FROM MoistureDeduction d WHERE d.mill IS NULL AND d.ownerId IS NULL")
+    void deleteLegacyGlobal();
 
     @Modifying
     @Query("DELETE FROM MoistureDeduction d WHERE d.mill.id = :millId")

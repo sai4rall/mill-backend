@@ -77,9 +77,17 @@ class FarmerRegistrationIntegrationTest {
         assertThat(farmer.get("bankAccount").asText()).isEqualTo("123456789012");
         assertThat(farmer.get("ifscCode").asText()).isEqualTo("SBIN0001234");
         assertThat(farmer.has("phoneVerificationToken")).isFalse();
+        assertThat(farmer.get("type").asText()).isEqualTo("FARMER"); // type defaults to farmer
 
         // 7. The token is single-use.
         call(post("/api/farmers"), token, farmerBody("9876543210", verificationToken), 400);
+
+        // 7b. Type: farmer, agent or supplier. Changing it keeps everything else; leaving it out keeps the current type.
+        JsonNode agent = call(put("/api/farmers/" + id), token, Map.of("name", "Ramesh Kumar", "phone", "9876543210", "type", "AGENT"), 200);
+        assertThat(agent.get("type").asText()).isEqualTo("AGENT");
+        assertThat(call(put("/api/farmers/" + id), token, Map.of("name", "Ramesh Kumar", "phone", "9876543210"), 200).get("type").asText()).isEqualTo("AGENT");
+        JsonNode badType = call(put("/api/farmers/" + id), token, Map.of("name", "Ramesh Kumar", "phone", "9876543210", "type", "BROKER"), 400);
+        assertThat(badType.get("fields").get("type").asText()).contains("FARMER", "AGENT", "SUPPLIER");
 
         // 8. Upload a photo and read it back.
         mvc.perform(multipart("/api/farmers/{id}/photo", id)

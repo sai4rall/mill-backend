@@ -37,6 +37,13 @@ public class PaymentService {
         this.otpService = otpService;
     }
 
+    @Transactional(readOnly = true)
+    public List<PaymentDto> getAll(Long millId) {
+        return paymentRepository.findByMillIdOrderByPaymentDateDescIdDesc(millId)
+                .stream().map(PaymentDto::from).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public List<PaymentDto> getByPurchase(Long purchaseId, Long millId) {
         return paymentRepository.findByPurchaseIdAndMillIdOrderByPaymentDateDesc(purchaseId, millId)
                 .stream().map(PaymentDto::from).collect(Collectors.toList());
