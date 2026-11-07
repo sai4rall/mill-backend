@@ -5,6 +5,7 @@ import com.millsystem.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -16,6 +17,7 @@ public class UserPrincipal implements UserDetails {
     private final String password;
     private final User.Role role;
     private final boolean active;
+    private final LocalDateTime passwordChangedAt;
 
     public UserPrincipal(User user) {
         this.id = user.getId();
@@ -23,6 +25,7 @@ public class UserPrincipal implements UserDetails {
         this.username = user.getUsername();
         this.password = user.getPassword();
         this.role = user.getRole();
+        this.passwordChangedAt = user.getPasswordChangedAt();
         // A user is only usable if their own account is active and, for mill-scoped users, their mill is ACTIVE.
         this.active = user.isActive()
                 && (user.getMill() == null || user.getMill().getStatus() == Mill.MillStatus.ACTIVE);
@@ -31,6 +34,7 @@ public class UserPrincipal implements UserDetails {
     public Long getId() { return id; }
     public Long getMillId() { return millId; }
     public User.Role getRole() { return role; }
+    public LocalDateTime getPasswordChangedAt() { return passwordChangedAt; }
 
     @Override public String getUsername() { return username; }
     @Override public String getPassword() { return password; }

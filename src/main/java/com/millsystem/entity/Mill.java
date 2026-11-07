@@ -34,6 +34,18 @@ public class Mill {
     @Column(name = "logo_updated_at")
     private LocalDateTime logoUpdatedAt;
 
+    /** SHA-256 (hex) of the mill's GPS device key; the key itself is shown once when generated and never stored. */
+    @Column(name = "gps_key_hash", length = 64, unique = true)
+    private String gpsKeyHash;
+
+    @Column(name = "gps_key_created_at")
+    private LocalDateTime gpsKeyCreatedAt;
+
+    public String getGpsKeyHash() { return gpsKeyHash; }
+    public void setGpsKeyHash(String gpsKeyHash) { this.gpsKeyHash = gpsKeyHash; }
+    public LocalDateTime getGpsKeyCreatedAt() { return gpsKeyCreatedAt; }
+    public void setGpsKeyCreatedAt(LocalDateTime gpsKeyCreatedAt) { this.gpsKeyCreatedAt = gpsKeyCreatedAt; }
+
     public LocalDateTime getLogoUpdatedAt() { return logoUpdatedAt; }
     public void setLogoUpdatedAt(LocalDateTime logoUpdatedAt) { this.logoUpdatedAt = logoUpdatedAt; }
 

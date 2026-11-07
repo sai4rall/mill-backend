@@ -36,7 +36,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Access denied"));
+        // Our own denials carry a reason (e.g. "Super admins can view mill data but cannot change it"); Spring's default does not.
+        String msg = ex.getMessage() == null || "Access Denied".equalsIgnoreCase(ex.getMessage()) ? "Access denied" : ex.getMessage();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", msg));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -68,6 +70,59 @@ public class GlobalExceptionHandler {
                 fields.putIfAbsent(err.getField(), err.getDefaultMessage()));
         String summary = fields.isEmpty() ? "Validation failed" : fields.values().iterator().next();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", summary, "fields", fields));
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Map<String, String>> handleConflict(ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<Map<String, String>> handleTooMany(TooManyRequestsException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    /** Malformed JSON, a wrong value type ("abc" for a number) or an unknown enum value: the client's fault, not a 500. */
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleUnreadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        Throwable cause = ex.getCause();
+        if (cause instanceof com.fasterxml.jackson.databind.exc.InvalidFormatException ife && !ife.getPath().isEmpty()) {
+            String field = ife.getPath().get(ife.getPath().size() - 1).getFieldName();
+            Class<?> target = ife.getTargetType();
+            String message = target != null && target.isEnum()
+                    ? "Invalid value for " + field + ". Allowed: " + java.util.Arrays.toString(target.getEnumConstants())
+                    : "Invalid value for " + field;
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", message, "fields", Map.of(field, message)));
+        }
+        if (cause instanceof com.fasterxml.jackson.databind.JsonMappingException jme && !jme.getPath().isEmpty()) {
+            String field = jme.getPath().get(jme.getPath().size() - 1).getFieldName();
+            String message = "Invalid value for " + field;
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", message, "fields", Map.of(field, message)));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Malformed request body"));
+    }
+
+    @ExceptionHandler({org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,
+            org.springframework.web.bind.MissingServletRequestParameterException.class,
+            org.springframework.web.bind.MissingRequestHeaderException.class})
+    public ResponseEntity<Map<String, String>> handleBadParameter(Exception ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Invalid or missing request parameter"));
+    }
+
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<Map<String, String>> handleConstraintViolation(jakarta.validation.ConstraintViolationException ex) {
+        String msg = ex.getConstraintViolations().stream().map(jakarta.validation.ConstraintViolation::getMessage).findFirst().orElse("Validation failed");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", msg));
+    }
+
+    /** Safety net for unique keys / foreign keys / column overflow that slipped past validation. */
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException ex) {
+        log.warn("Data integrity violation: {}", ex.getMostSpecificCause().getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", "This change conflicts with existing data (duplicate value, value too long, or record in use)"));
     }
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);

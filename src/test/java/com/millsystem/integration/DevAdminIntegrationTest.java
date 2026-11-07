@@ -43,7 +43,8 @@ class DevAdminIntegrationTest {
         // 1. Dev admin creates a super admin, who can log in with the one-time password.
         JsonNode created = call(post("/api/dev/super-admins"), dev, Map.of("username", "ops_super", "fullName", "Ops Super"), 201);
         String superToken = login("ops_super", created.get("generatedPassword").asText());
-        call(post("/api/dev/super-admins"), dev, Map.of("username", "ops_super"), 400);           // duplicate
+        call(post("/api/dev/super-admins"), dev, Map.of("username", "ops_super"), 409);           // duplicate
+        call(post("/api/dev/super-admins"), dev, Map.of("username", "OPS_SUPER"), 409);           // duplicate, other case
         call(post("/api/dev/super-admins"), dev, Map.of("username", "a b"), 400);                 // invalid
         JsonNode supers = call(get("/api/dev/super-admins"), dev, null, 200);
         assertThat(supers.findValuesAsText("username")).contains("superadmin", "ops_super");

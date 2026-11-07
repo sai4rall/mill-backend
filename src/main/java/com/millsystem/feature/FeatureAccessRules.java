@@ -46,6 +46,7 @@ public class FeatureAccessRules {
             new Rule(null, "/api/stock/**", Set.of(STOCK_REPORT)),
 
             new Rule(null, "/api/trucks/**", Set.of(TRUCK_TRACKING)),
+            new Rule(null, "/api/mill/gps-key/**", Set.of(TRUCK_TRACKING)),
             new Rule(null, "/api/mill/operators/**", Set.of(OPERATORS))
     );
 

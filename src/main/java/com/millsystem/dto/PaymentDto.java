@@ -1,5 +1,7 @@
 package com.millsystem.dto;
 
+import jakarta.validation.constraints.*;
+import com.millsystem.validation.NotFutureDate;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.millsystem.entity.Payment;
 import jakarta.validation.constraints.NotNull;
@@ -11,10 +13,12 @@ import java.time.LocalDateTime;
 public class PaymentDto {
     private Long id;
     @NotNull private Long purchaseId;
-    @NotNull @Positive private BigDecimal amount;
-    @NotNull private LocalDate paymentDate;
+    @NotNull @Positive @Digits(integer = 10, fraction = 2, message = "Amount can have at most 10 digits and 2 decimal places") private BigDecimal amount;
+    @NotNull @NotFutureDate(message = "Payment date cannot be in the future") private LocalDate paymentDate;
     private Payment.PaymentMode paymentMode;
+    @Size(max = 100, message = "Must be at most 100 characters")
     private String referenceNumber;
+    @Size(max = 2000, message = "Must be at most 2000 characters")
     private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime otpVerifiedAt;

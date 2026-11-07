@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@org.springframework.validation.annotation.Validated
 @Tag(name = "Moisture Deductions", description = "Moisture % bands and their price deduction. Global table (super admin) and per-mill override (mill admin).")
 public class MoistureDeductionController {
 
@@ -41,7 +42,7 @@ public class MoistureDeductionController {
     @PutMapping("/api/moisture-deductions")
     @PreAuthorize("hasRole('MILL_ADMIN')")
     @Operation(summary = "Replace my mill's moisture table (mill admin)", description = "Overrides the global table for this mill. An empty list falls back to the global table.")
-    public ResponseEntity<MoistureTableDto> replaceMill(@RequestBody List<MoistureRangeDto> ranges,
+    public ResponseEntity<MoistureTableDto> replaceMill(@RequestBody List<@jakarta.validation.Valid MoistureRangeDto> ranges,
                                                         @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(service.replaceMill(principal.getMillId(), ranges));
     }
@@ -63,7 +64,7 @@ public class MoistureDeductionController {
 
     @PutMapping("/api/admin/moisture-deductions")
     @Operation(summary = "Replace the global moisture table (super admin)", description = "Applies to every mill without its own table.")
-    public ResponseEntity<List<MoistureRangeDto>> replaceGlobal(@RequestBody List<MoistureRangeDto> ranges) {
+    public ResponseEntity<List<MoistureRangeDto>> replaceGlobal(@RequestBody List<@jakarta.validation.Valid MoistureRangeDto> ranges) {
         return ResponseEntity.ok(service.replaceGlobal(ranges));
     }
 }

@@ -29,11 +29,31 @@ public class DataSeeder implements CommandLineRunner {
     @Value("${app.dev-admin.password:" + DEFAULT_DEV_ADMIN_PASSWORD + "}")
     private String devAdminPassword;
 
+    private final org.springframework.core.env.Environment environment;
+
     public DataSeeder(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                      FeatureFlagService featureFlagService) {
+                      FeatureFlagService featureFlagService, org.springframework.core.env.Environment environment) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.featureFlagService = featureFlagService;
+        this.environment = environment;
+    }
+
+    /**
+     * Demo defaults are fine locally, but production must never create an account with a published or weak password:
+     * the prod profile refuses to start in that case. (Existing accounts are untouched; the password is only used on creation.)
+     */
+    private String initialPassword(String account, String configured, String knownDefault) {
+        boolean prod = java.util.Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        boolean weak = configured == null || configured.length() < 12 || knownDefault.equals(configured);
+        if (prod && weak) {
+            throw new IllegalStateException("Refusing to create " + account + " with a default or weak password: set a strong (12+ characters) "
+                    + ("superadmin".equals(account) ? "SUPER_ADMIN_PASSWORD" : "DEV_ADMIN_PASSWORD"));
+        }
+        if (knownDefault.equals(configured)) {
+            log.warn("Creating {} with the published demo password. Change it after signing in; never use it in production.", account);
+        }
+        return configured;
     }
 
     @Override
@@ -42,7 +62,7 @@ public class DataSeeder implements CommandLineRunner {
         if (userRepository.findByUsername("superadmin").isEmpty()) {
             User superAdmin = new User();
             superAdmin.setUsername("superadmin");
-            superAdmin.setPassword(passwordEncoder.encode(superAdminPassword));
+            superAdmin.setPassword(passwordEncoder.encode(initialPassword("superadmin", superAdminPassword, DEFAULT_SUPER_ADMIN_PASSWORD)));
             superAdmin.setRole(User.Role.SUPER_ADMIN);
             superAdmin.setFullName("Super Administrator");
             superAdmin.setActive(true);
@@ -58,7 +78,7 @@ public class DataSeeder implements CommandLineRunner {
         if (userRepository.findByUsername(devAdminUsername).isPresent()) return;
         User dev = new User();
         dev.setUsername(devAdminUsername);
-        dev.setPassword(passwordEncoder.encode(devAdminPassword));
+        dev.setPassword(passwordEncoder.encode(initialPassword(devAdminUsername, devAdminPassword, DEFAULT_DEV_ADMIN_PASSWORD)));
         dev.setRole(User.Role.DEV_ADMIN);
         dev.setFullName("Dev Administrator");
         dev.setActive(true);

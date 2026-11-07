@@ -1,5 +1,7 @@
 package com.millsystem.dto;
 
+import jakarta.validation.constraints.*;
+import com.millsystem.validation.NotFutureDate;
 import com.millsystem.entity.MillBatch;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -10,18 +12,22 @@ import java.util.List;
 
 public class MillBatchDto {
     private Long id;
-    @NotNull private LocalDate batchDate;
-    @NotNull @Positive private BigDecimal paddyInputQuintals;
+    @NotNull @NotFutureDate(message = "Batch date cannot be in the future") private LocalDate batchDate;
+    @NotNull @Positive @Digits(integer = 8, fraction = 2, message = "Quantity can have at most 8 digits and 2 decimal places") private BigDecimal paddyInputQuintals;
+    @PositiveOrZero @Digits(integer = 8, fraction = 2, message = "Quantity can have at most 8 digits and 2 decimal places")
     private BigDecimal expectedRiceQuintals;
+    @PositiveOrZero @Digits(integer = 8, fraction = 2, message = "Quantity can have at most 8 digits and 2 decimal places")
     private BigDecimal actualRiceQuintals;
     private BigDecimal conversionRate;
     private MillBatch.BatchStatus status;
+    @Size(max = 2000, message = "Must be at most 2000 characters")
     private String notes;
     private List<BatchPurchaseEntry> purchaseEntries;
     private LocalDateTime createdAt;
 
     public static class BatchPurchaseEntry {
         private Long purchaseId;
+        @Digits(integer = 8, fraction = 2, message = "Quantity can have at most 8 digits and 2 decimal places")
         private BigDecimal quintalsUsed;
         public Long getPurchaseId() { return purchaseId; }
         public void setPurchaseId(Long purchaseId) { this.purchaseId = purchaseId; }

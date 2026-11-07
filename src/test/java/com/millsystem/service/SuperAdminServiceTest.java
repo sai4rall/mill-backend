@@ -29,7 +29,7 @@ class SuperAdminServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new SuperAdminService(userRepository, encoder, new PasswordGeneratorService());
+        service = new SuperAdminService(userRepository, encoder, new PasswordGeneratorService(), new UsernamePolicy(userRepository));
         lenient().when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
     }
 
@@ -77,7 +77,7 @@ class SuperAdminServiceTest {
 
     @Test
     void rejectsDuplicateUsername() {
-        when(userRepository.existsByUsername("superadmin")).thenReturn(true);
+        when(userRepository.existsByUsernameIgnoreCase("superadmin")).thenReturn(true);
         assertThatThrownBy(() -> service.create(request("superadmin", null)))
                 .hasMessage("Username 'superadmin' is already taken");
         verify(userRepository, never()).save(any());

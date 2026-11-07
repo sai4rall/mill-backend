@@ -13,6 +13,7 @@ import java.util.List;
 public interface ExportShipmentRepository extends JpaRepository<ExportShipment, Long> {
     List<ExportShipment> findByOrderIdAndMillIdOrderByShipmentDateDesc(Long orderId, Long millId);
     List<ExportShipment> findByMillIdOrderByShipmentDateAsc(Long millId);
+    List<ExportShipment> findByMillIdOrderByShipmentDateDescIdDesc(Long millId);
     List<ExportShipment> findByMillIdAndShipmentDateBetweenOrderByShipmentDateAsc(Long millId, LocalDate from, LocalDate to);
 
     @Query("SELECT COALESCE(SUM(s.quintalsExported), 0) FROM ExportShipment s WHERE s.mill.id = :millId")

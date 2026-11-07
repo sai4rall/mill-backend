@@ -88,8 +88,8 @@ public class PurchaseService {
     public PurchaseDto update(Long id, PurchaseDto dto, Long millId) {
         PaddyPurchase purchase = purchaseRepository.findByIdAndMillId(id, millId)
                 .orElseThrow(() -> new ResourceNotFoundException("Purchase not found: " + id));
+        // Only notes are editable. Payment status follows the recorded (OTP-confirmed) payments and is never set by clients.
         if (dto.getNotes() != null) purchase.setNotes(dto.getNotes());
-        if (dto.getPaymentStatus() != null) purchase.setPaymentStatus(dto.getPaymentStatus());
         purchase = purchaseRepository.save(purchase);
         BigDecimal paid = paymentRepository.sumAmountByPurchaseId(id);
         return PurchaseDto.from(purchase, paid);

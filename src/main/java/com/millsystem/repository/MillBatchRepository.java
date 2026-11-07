@@ -19,4 +19,12 @@ public interface MillBatchRepository extends JpaRepository<MillBatch, Long> {
 
     @Query("SELECT COALESCE(SUM(b.actualRiceQuintals), 0) FROM MillBatch b WHERE b.mill.id = :millId AND b.status = 'COMPLETED'")
     BigDecimal sumActualRiceByMillId(Long millId);
+
+    /** Paddy sent to the mill in all batches (in progress and completed). */
+    @Query("SELECT COALESCE(SUM(b.paddyInputQuintals), 0) FROM MillBatch b WHERE b.mill.id = :millId")
+    BigDecimal sumPaddyInputByMillId(Long millId);
+
+    /** Paddy currently being milled. */
+    @Query("SELECT COALESCE(SUM(b.paddyInputQuintals), 0) FROM MillBatch b WHERE b.mill.id = :millId AND b.status = 'IN_PROGRESS'")
+    BigDecimal sumPaddyInputInProgressByMillId(Long millId);
 }

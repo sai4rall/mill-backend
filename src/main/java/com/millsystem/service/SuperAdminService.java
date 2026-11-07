@@ -14,12 +14,15 @@ import java.util.List;
 @Service
 public class SuperAdminService {
 
+    private final UsernamePolicy usernamePolicy;
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasswordGeneratorService passwordGenerator;
 
     public SuperAdminService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                             PasswordGeneratorService passwordGenerator) {
+                             PasswordGeneratorService passwordGenerator, UsernamePolicy usernamePolicy) {
+        this.usernamePolicy = usernamePolicy;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordGenerator = passwordGenerator;
@@ -31,13 +34,11 @@ public class SuperAdminService {
 
     @Transactional
     public SuperAdminDto create(SuperAdminDto request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new IllegalArgumentException("Username '" + request.getUsername() + "' is already taken");
-        }
+        String username = usernamePolicy.claim(request.getUsername());
         String rawPassword = passwordGenerator.generate();
         User user = new User();
-        user.setUsername(request.getUsername());
-        user.setFullName(request.getFullName() != null ? request.getFullName() : request.getUsername());
+        user.setUsername(username);
+        user.setFullName(request.getFullName() != null && !request.getFullName().isBlank() ? request.getFullName().trim() : username);
         user.setPassword(passwordEncoder.encode(rawPassword));
         user.setRole(User.Role.SUPER_ADMIN);
         user.setActive(true);

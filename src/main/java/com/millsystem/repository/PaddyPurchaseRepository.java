@@ -17,6 +17,7 @@ public interface PaddyPurchaseRepository extends JpaRepository<PaddyPurchase, Lo
     List<PaddyPurchase> findByMillIdAndPurchaseDateBetweenOrderByPurchaseDateAsc(Long millId, LocalDate from, LocalDate to);
     List<PaddyPurchase> findByMillIdAndFarmerIdOrderByPurchaseDateDesc(Long millId, Long farmerId);
     Optional<PaddyPurchase> findByIdAndMillId(Long id, Long millId);
+    boolean existsByFarmerId(Long farmerId);
 
     @Query("SELECT COALESCE(SUM(p.weightQuintals), 0) FROM PaddyPurchase p WHERE p.mill.id = :millId")
     BigDecimal sumWeightByMillId(Long millId);

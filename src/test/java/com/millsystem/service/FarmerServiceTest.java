@@ -33,6 +33,7 @@ class FarmerServiceTest {
 
     private static final long MILL_ID = 7L;
 
+    @Mock private com.millsystem.repository.PaddyPurchaseRepository purchaseRepository;
     @Mock private FarmerRepository farmerRepository;
     @Mock private FarmerPhotoRepository photoRepository;
     @Mock private MillRepository millRepository;
@@ -46,7 +47,7 @@ class FarmerServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new FarmerService(farmerRepository, photoRepository, millRepository, otpService);
+        service = new FarmerService(farmerRepository, photoRepository, millRepository, otpService, purchaseRepository);
         ReflectionTestUtils.setField(service, "maxPhotoBytes", 2_097_152L);
         mill = new Mill();
         mill.setId(MILL_ID);

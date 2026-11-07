@@ -83,13 +83,16 @@ public class PaymentService {
         paymentRepository.save(payment);
 
         BigDecimal totalPaid = paymentRepository.sumAmountByPurchaseId(purchase.getId());
-        if (totalPaid.compareTo(purchase.getTotalAmount()) >= 0) {
-            purchase.setPaymentStatus(PaddyPurchase.PaymentStatus.PAID);
-        } else if (totalPaid.compareTo(BigDecimal.ZERO) > 0) {
-            purchase.setPaymentStatus(PaddyPurchase.PaymentStatus.PARTIAL);
-        }
+        purchase.setPaymentStatus(statusFor(totalPaid, purchase.getTotalAmount()));
         purchaseRepository.save(purchase);
         return PaymentDto.from(payment);
+    }
+
+    /** The only rule for a purchase's payment status: what has been paid against the total. */
+    public static PaddyPurchase.PaymentStatus statusFor(BigDecimal paid, BigDecimal total) {
+        if (paid.compareTo(total) >= 0) return PaddyPurchase.PaymentStatus.PAID;
+        if (paid.signum() > 0) return PaddyPurchase.PaymentStatus.PARTIAL;
+        return PaddyPurchase.PaymentStatus.PENDING;
     }
 
     private PaddyPurchase findPurchase(Long purchaseId, Long millId) {

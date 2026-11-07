@@ -1,5 +1,7 @@
 package com.millsystem.dto;
 
+import jakarta.validation.constraints.*;
+import com.millsystem.validation.NotFutureDate;
 import com.millsystem.entity.ExportOrder;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -11,14 +13,17 @@ public class ExportOrderDto {
     private Long id;
     @NotNull private Long customerId;
     private String customerName;
-    @NotNull private LocalDate orderDate;
+    @NotNull @NotFutureDate(message = "Order date cannot be in the future") private LocalDate orderDate;
+    @Size(max = 100, message = "Must be at most 100 characters")
     private String riceType;
-    @NotNull @Positive private BigDecimal quantityQuintals;
+    @NotNull @Positive @Digits(integer = 8, fraction = 2, message = "Quantity can have at most 8 digits and 2 decimal places") private BigDecimal quantityQuintals;
+    @PositiveOrZero @Digits(integer = 8, fraction = 2, message = "Price can have at most 8 digits and 2 decimal places")
     private BigDecimal pricePerQuintal;
     private BigDecimal totalAmount;
     private ExportOrder.OrderStatus status;
     private BigDecimal shippedQuintals;
     private BigDecimal remainingQuintals;
+    @Size(max = 2000, message = "Must be at most 2000 characters")
     private String notes;
     private LocalDateTime createdAt;
 

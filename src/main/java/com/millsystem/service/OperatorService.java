@@ -15,13 +15,16 @@ import java.util.stream.Collectors;
 @Service
 public class OperatorService {
 
+    private final UsernamePolicy usernamePolicy;
+
     private final UserRepository userRepository;
     private final MillRepository millRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasswordGeneratorService passwordGenerator;
 
     public OperatorService(UserRepository userRepository, MillRepository millRepository,
-                           PasswordEncoder passwordEncoder, PasswordGeneratorService passwordGenerator) {
+                           PasswordEncoder passwordEncoder, PasswordGeneratorService passwordGenerator, UsernamePolicy usernamePolicy) {
+        this.usernamePolicy = usernamePolicy;
         this.userRepository = userRepository;
         this.millRepository = millRepository;
         this.passwordEncoder = passwordEncoder;
@@ -37,10 +40,11 @@ public class OperatorService {
     public OperatorDto createOperator(Long millId, OperatorDto request) {
         Mill mill = millRepository.findById(millId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mill not found: " + millId));
+        String username = usernamePolicy.claim(request.getUsername());
         String rawPassword = passwordGenerator.generate();
         User operator = new User();
         operator.setMill(mill);
-        operator.setUsername(request.getUsername());
+        operator.setUsername(username);
         operator.setPassword(passwordEncoder.encode(rawPassword));
         operator.setRole(User.Role.MILL_OPERATOR);
         operator.setFullName(request.getFullName());

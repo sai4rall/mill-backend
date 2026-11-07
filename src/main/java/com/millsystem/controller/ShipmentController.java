@@ -29,13 +29,14 @@ public class ShipmentController {
     }
 
     @GetMapping
-    @Operation(summary = "List shipments for an order")
+    @Operation(summary = "List shipments", description = "All shipments of the mill, newest first; pass orderId to limit to one order.")
     public ResponseEntity<List<ShipmentDto>> getByOrder(
-            @RequestParam Long orderId,
+            @RequestParam(required = false) Long orderId,
             @Parameter(description = "Required for SUPER_ADMIN. Ignored for MILL_ADMIN/OPERATOR.")
             @RequestHeader(value = "X-Mill-Id", required = false) Long millId,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(shipmentService.getByOrder(orderId, millResolver.resolve(principal, millId)));
+        Long mill = millResolver.resolve(principal, millId);
+        return ResponseEntity.ok(orderId == null ? shipmentService.getAll(mill) : shipmentService.getByOrder(orderId, mill));
     }
 
     @PostMapping

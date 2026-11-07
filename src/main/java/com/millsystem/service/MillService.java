@@ -17,13 +17,16 @@ import java.util.stream.Collectors;
 @Service
 public class MillService {
 
+    private final UsernamePolicy usernamePolicy;
+
     private final MillRepository millRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasswordGeneratorService passwordGenerator;
 
     public MillService(MillRepository millRepository, UserRepository userRepository,
-                       PasswordEncoder passwordEncoder, PasswordGeneratorService passwordGenerator) {
+                       PasswordEncoder passwordEncoder, PasswordGeneratorService passwordGenerator, UsernamePolicy usernamePolicy) {
+        this.usernamePolicy = usernamePolicy;
         this.millRepository = millRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -41,6 +44,7 @@ public class MillService {
     @Transactional
     public CreateMillResponse createMill(CreateMillRequest request) {
         Mill mill = new Mill();
+        String adminUsername = usernamePolicy.claim(request.getAdminUsername());
         mill.setName(request.getName());
         mill.setLocation(request.getLocation());
         mill.setContactPhone(request.getContactPhone());
@@ -50,10 +54,10 @@ public class MillService {
         String rawPassword = passwordGenerator.generate();
         User admin = new User();
         admin.setMill(mill);
-        admin.setUsername(request.getAdminUsername());
+        admin.setUsername(adminUsername);
         admin.setPassword(passwordEncoder.encode(rawPassword));
         admin.setRole(User.Role.MILL_ADMIN);
-        admin.setFullName(request.getAdminFullName() != null ? request.getAdminFullName() : request.getAdminUsername());
+        admin.setFullName(request.getAdminFullName() != null && !request.getAdminFullName().isBlank() ? request.getAdminFullName().trim() : adminUsername);
         admin.setActive(true);
         userRepository.save(admin);
 
