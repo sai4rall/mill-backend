@@ -15,4 +15,7 @@ public interface MillBatchPurchaseRepository extends JpaRepository<MillBatchPurc
 
     @Query("SELECT COALESCE(SUM(mbp.quintalsUsed), 0) FROM MillBatchPurchase mbp WHERE mbp.batch.mill.id = :millId AND mbp.batch.status = 'IN_PROGRESS'")
     BigDecimal sumQuintalsInProgressByMillId(Long millId);
+
+    @Query("SELECT COALESCE(SUM(mbp.quintalsUsed), 0) FROM MillBatchPurchase mbp WHERE mbp.purchase.id = :purchaseId")
+    BigDecimal sumQuintalsUsedByPurchaseId(Long purchaseId);
 }

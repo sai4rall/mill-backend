@@ -1,5 +1,6 @@
 package com.millsystem.dto;
 
+import com.millsystem.validation.NotFutureDate;
 import com.millsystem.entity.PaddyPurchase;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
@@ -11,23 +12,28 @@ public class PurchaseDto {
     private Long id;
     @NotNull private Long farmerId;
     private String farmerName;
-    @NotNull private LocalDate purchaseDate;
-    @NotNull @Positive private BigDecimal weightQuintals;
-    @NotNull @Positive private BigDecimal pricePerQuintal;
+    @NotNull @NotFutureDate(message = "Purchase date cannot be in the future") private LocalDate purchaseDate;
+    @NotNull @Positive @Digits(integer = 8, fraction = 2, message = "Quantity can have at most 8 digits and 2 decimal places") private BigDecimal weightQuintals;
+    @NotNull @Positive @Digits(integer = 8, fraction = 2, message = "Price can have at most 8 digits and 2 decimal places") private BigDecimal pricePerQuintal;
     // Required for new purchases while the moisture_deduction feature is enabled for the mill (checked in
     // PurchaseService); drives the deduction looked up from the moisture table.
     @DecimalMin(value = "0.00", message = "Moisture % must be between 0 and 100")
     @DecimalMax(value = "100.00", message = "Moisture % must be between 0 and 100")
     @Digits(integer = 3, fraction = 2, message = "Moisture % can have at most 2 decimals")
+    @Digits(integer = 3, fraction = 2, message = "Percentage can have at most 2 decimal places")
     private BigDecimal moisturePct;
     private BigDecimal deductionPct;     // read-only: stored at purchase time
     private BigDecimal grossAmount;      // read-only: weight × price
     private BigDecimal deductionAmount;  // read-only: gross − total
     private BigDecimal totalAmount;      // net payable after deduction
+    @Size(max = 20, message = "Must be at most 20 characters")
     private String truckNumber;
+    // Read-only: derived from payments (see PaymentService); ignored if a client sends it.
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY)
     private PaddyPurchase.PaymentStatus paymentStatus;
     private BigDecimal amountPaid;
     private BigDecimal amountDue;
+    @Size(max = 2000, message = "Must be at most 2000 characters")
     private String notes;
     private LocalDateTime createdAt;
 

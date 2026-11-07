@@ -29,6 +29,10 @@ public class User {
     @Column(name = "full_name")
     private String fullName;
 
+    // Tokens issued before this moment are rejected (password changed or reset). Null = never changed.
+    @Column(name = "password_changed_at")
+    private LocalDateTime passwordChangedAt;
+
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
@@ -46,7 +50,12 @@ public class User {
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
     public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    /** Also stamps passwordChangedAt, so login tokens issued before this change stop working. */
+    public void setPassword(String password) {
+        this.password = password;
+        this.passwordChangedAt = LocalDateTime.now();
+    }
+    public LocalDateTime getPasswordChangedAt() { return passwordChangedAt; }
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
     public String getFullName() { return fullName; }

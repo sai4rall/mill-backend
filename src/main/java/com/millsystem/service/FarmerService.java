@@ -1,5 +1,7 @@
 package com.millsystem.service;
 
+import com.millsystem.repository.PaddyPurchaseRepository;
+import com.millsystem.exception.ConflictException;
 import com.millsystem.dto.FarmerDto;
 import com.millsystem.entity.Farmer;
 import com.millsystem.entity.FarmerPhoto;
@@ -21,6 +23,8 @@ import java.util.stream.Collectors;
 @Service
 public class FarmerService {
 
+    private final PaddyPurchaseRepository purchaseRepository;
+
     private final FarmerRepository farmerRepository;
     private final FarmerPhotoRepository photoRepository;
     private final MillRepository millRepository;
@@ -30,7 +34,8 @@ public class FarmerService {
     private long maxPhotoBytes;
 
     public FarmerService(FarmerRepository farmerRepository, FarmerPhotoRepository photoRepository,
-                         MillRepository millRepository, OtpService otpService) {
+                         MillRepository millRepository, OtpService otpService, PaddyPurchaseRepository purchaseRepository) {
+        this.purchaseRepository = purchaseRepository;
         this.farmerRepository = farmerRepository;
         this.photoRepository = photoRepository;
         this.millRepository = millRepository;
@@ -89,6 +94,9 @@ public class FarmerService {
     @Transactional
     public void delete(Long id, Long millId) {
         Farmer farmer = find(id, millId);
+        if (purchaseRepository.existsByFarmerId(farmer.getId())) {
+            throw new ConflictException(farmer.getName() + " has purchases on record and cannot be deleted");
+        }
         photoRepository.findById(farmer.getId()).ifPresent(photoRepository::delete);
         farmerRepository.delete(farmer);
     }

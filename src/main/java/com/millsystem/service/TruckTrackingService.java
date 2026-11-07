@@ -28,9 +28,15 @@ public class TruckTrackingService {
     }
 
     @Transactional
-    public void recordPing(GpsPingDto dto) {
-        Mill mill = millRepo.findById(dto.getMillId())
-                .orElseThrow(() -> new ResourceNotFoundException("Mill not found: " + dto.getMillId()));
+    /** Stores a ping for the mill that owns the device key (resolved by the controller). */
+    public void recordPing(Mill mill, GpsPingDto dto) {
+        if (dto.getMillId() != null && !dto.getMillId().equals(mill.getId())) {
+            throw new IllegalArgumentException("millId does not match the device key");
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (dto.getRecordedAt() != null && (dto.getRecordedAt().isAfter(now.plusMinutes(5)) || dto.getRecordedAt().isBefore(now.minusDays(7)))) {
+            throw new IllegalArgumentException("recordedAt must be within the last 7 days and not in the future");
+        }
 
         TruckLocation loc = new TruckLocation();
         loc.setMill(mill);
@@ -38,7 +44,7 @@ public class TruckTrackingService {
         loc.setLatitude(dto.getLatitude());
         loc.setLongitude(dto.getLongitude());
         loc.setSpeed(dto.getSpeed());
-        loc.setRecordedAt(dto.getRecordedAt() != null ? dto.getRecordedAt() : LocalDateTime.now());
+        loc.setRecordedAt(dto.getRecordedAt() != null ? dto.getRecordedAt() : now);
         truckRepo.save(loc);
     }
 

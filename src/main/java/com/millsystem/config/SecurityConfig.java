@@ -44,6 +44,10 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Not signed in -> 401 (the UIs then send the user to their login page); signed in but not allowed -> 403.
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) -> json(res, 401, "Please sign in to continue"))
+                .accessDeniedHandler((req, res, e) -> json(res, 403, "Access denied")))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/gps/**").permitAll()
@@ -51,11 +55,20 @@ public class SecurityConfig {
                 .requestMatchers("/api/dev/**").hasRole("DEV_ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
                 .requestMatchers("/api/mill/operators/**").hasAnyRole("MILL_ADMIN")
+                .requestMatchers("/api/mill/gps-key/**").hasRole("MILL_ADMIN")
+                // Truck tracking is a mill-admin module in every UI; enforce the same rule here.
+                .requestMatchers("/api/trucks/**").hasRole("MILL_ADMIN")
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    private static void json(jakarta.servlet.http.HttpServletResponse res, int status, String message) throws java.io.IOException {
+        res.setStatus(status);
+        res.setContentType("application/json");
+        res.getWriter().write("{\"error\":\"" + message + "\"}");
     }
 
     @Bean

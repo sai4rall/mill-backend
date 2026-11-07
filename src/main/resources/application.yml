@@ -23,8 +23,11 @@ server:
   forward-headers-strategy: framework
 
 app:
+  # Business time zone: "today" for date validation (mills are in India; servers usually run in UTC).
+  timezone: ${APP_TIMEZONE:Asia/Kolkata}
   jwt:
-    secret: ${JWT_SECRET:mill_system_super_secret_jwt_key_2024_must_be_at_least_256_bits_long}
+    # No default: set JWT_SECRET (32+ bytes). Without it a random per-run secret is used outside the prod profile.
+    secret: ${JWT_SECRET:}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}   # 24 hours
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
