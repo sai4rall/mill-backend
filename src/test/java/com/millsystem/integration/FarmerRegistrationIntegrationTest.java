@@ -44,7 +44,7 @@ class FarmerRegistrationIntegrationTest {
         // 1. Super admin creates a mill; its admin logs in with the generated password.
         String superToken = login("superadmin", "Admin@123");
         JsonNode mill = call(post("/api/admin/mills"), superToken,
-                Map.of("name", "Integration Mill", "adminUsername", "int_admin"), 201);
+                Map.of("name", "Integration Mill", "adminUsername", "int_admin", "location", "Nalgonda", "contactPhone", "9876543210", "adminFullName", "Mill Admin"), 201);
         String token = login("int_admin", mill.get("generatedPassword").asText());
 
         // 2. Field validation rejects a bad request with per-field messages, before any OTP is involved.

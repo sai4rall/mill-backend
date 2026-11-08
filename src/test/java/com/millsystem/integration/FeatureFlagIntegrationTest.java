@@ -101,7 +101,7 @@ class FeatureFlagIntegrationTest {
     private final Map<Long, String> generatedPasswords = new java.util.HashMap<>();
 
     private long createMill(String superToken, String name, String admin) throws Exception {
-        JsonNode mill = call(post("/api/admin/mills"), superToken, Map.of("name", name, "adminUsername", admin), 201);
+        JsonNode mill = call(post("/api/admin/mills"), superToken, Map.of("name", name, "adminUsername", admin, "location", "Nalgonda", "contactPhone", "9876543210", "adminFullName", "Mill Admin"), 201);
         generatedPasswords.put(mill.get("millId").asLong(), mill.get("generatedPassword").asText());
         return mill.get("millId").asLong();
     }
