@@ -35,8 +35,8 @@ class CompanyIsolationIntegrationTest {
         String a = login("company_a", supA.get("generatedPassword").asText());
         String b = login("company_b", supB.get("generatedPassword").asText());
 
-        long millA = call(post("/api/admin/mills"), a, null, Map.of("name", "A Rice Mill", "adminUsername", "a_mill_admin"), 201).get("millId").asLong();
-        long millB = call(post("/api/admin/mills"), b, null, Map.of("name", "B Rice Mill", "adminUsername", "b_mill_admin"), 201).get("millId").asLong();
+        long millA = call(post("/api/admin/mills"), a, null, Map.of("name", "A Rice Mill", "adminUsername", "a_mill_admin", "location", "Nalgonda", "contactPhone", "9876543210", "adminFullName", "Mill Admin"), 201).get("millId").asLong();
+        long millB = call(post("/api/admin/mills"), b, null, Map.of("name", "B Rice Mill", "adminUsername", "b_mill_admin", "location", "Nalgonda", "contactPhone", "9876543210", "adminFullName", "Mill Admin"), 201).get("millId").asLong();
 
         // Lists show only the company's own mills.
         assertThat(call(get("/api/admin/mills"), a, null, null, 200).findValuesAsText("name")).containsExactly("A Rice Mill");
@@ -49,7 +49,7 @@ class CompanyIsolationIntegrationTest {
             int code = mvc.perform(get(path).header("Authorization", "Bearer " + a).header("X-Mill-Id", millB)).andReturn().getResponse().getStatus();
             assertThat(code).as(path).isEqualTo(404);
         }
-        call(put("/api/admin/mills/" + millB), a, null, Map.of("name", "Taken", "adminUsername", "b_mill_admin"), 404);
+        call(put("/api/admin/mills/" + millB), a, null, Map.of("name", "Taken", "adminUsername", "b_mill_admin", "location", "Nalgonda", "contactPhone", "9876543210", "adminFullName", "Mill Admin"), 404);
         call(patch("/api/admin/mills/" + millB + "/status"), a, null, null, 404);
         call(post("/api/admin/mills/" + millB + "/reset-password"), a, null, null, 404);
         assertThat(call(get("/api/admin/mills"), b, null, null, 200).findValuesAsText("name")).containsExactly("B Rice Mill");
@@ -73,6 +73,28 @@ class CompanyIsolationIntegrationTest {
         // A company that still owns mills cannot be deleted; one without mills can.
         call(delete("/api/dev/super-admins/" + supA.get("id").asLong()), dev, null, null, 409);
         call(delete("/api/dev/super-admins/" + supB.get("id").asLong()), dev, null, null, 204);
+    }
+
+    @Test
+    void creatingAMillValidatesEveryMandatoryField() throws Exception {
+        String sup = login("superadmin", "Admin@123");
+        JsonNode empty = call(post("/api/admin/mills"), sup, null, Map.of(), 400);
+        assertThat(empty.get("fields").fieldNames()).toIterable()
+                .contains("name", "location", "contactPhone", "adminUsername", "adminFullName");
+
+        JsonNode bad = call(post("/api/admin/mills"), sup, null, Map.of("name", "V Mill", "location", "Guntur", "contactPhone", "12345",
+                "contactEmail", "not-an-email", "adminUsername", "a b", "adminFullName", "R2"), 400);
+        assertThat(bad.get("fields").get("contactPhone").asText()).isEqualTo("Enter a valid 10-digit mobile number");
+        assertThat(bad.get("fields").fieldNames()).toIterable().contains("contactEmail", "adminUsername", "adminFullName");
+        call(post("/api/admin/mills"), sup, null, Map.of("name", "V Mill", "location", "Guntur", "contactPhone", "98765432101",
+                "adminUsername", "v_admin", "adminFullName", "Venkat Rao"), 400); // 11 digits
+
+        // +91 and spaces are accepted and stored as the 10-digit number; email is optional.
+        call(post("/api/admin/mills"), sup, null, Map.of("name", "V Mill", "location", "Guntur", "contactPhone", "+91 98765 43210",
+                "adminUsername", "v_admin", "adminFullName", "Venkat Rao"), 201);
+        JsonNode created = call(get("/api/admin/mills"), sup, null, null, 200).findParents("name").stream()
+                .filter(m -> m.get("name").asText().equals("V Mill")).findFirst().orElseThrow();
+        assertThat(created.get("contactPhone").asText()).isEqualTo("9876543210");
     }
 
     private String login(String username, String password) throws Exception {

@@ -45,7 +45,7 @@ class MoistureAndPaymentIntegrationTest {
     @Test
     void moistureDeductionPricingAndOtpConfirmedPayment() throws Exception {
         String superToken = login("superadmin", "Admin@123");
-        JsonNode mill = call(post("/api/admin/mills"), superToken, Map.of("name", "Moisture Mill", "adminUsername", "moist_admin"), 201);
+        JsonNode mill = call(post("/api/admin/mills"), superToken, Map.of("name", "Moisture Mill", "adminUsername", "moist_admin", "location", "Nalgonda", "contactPhone", "9876543210", "adminFullName", "Mill Admin"), 201);
         String admin = login("moist_admin", mill.get("generatedPassword").asText());
         JsonNode op = call(post("/api/mill/operators"), admin, Map.of("username", "moist_op", "fullName", "Op"), 201);
         String operator = login("moist_op", op.get("generatedPassword").asText());

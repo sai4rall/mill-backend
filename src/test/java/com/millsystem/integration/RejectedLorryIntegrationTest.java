@@ -31,10 +31,10 @@ class RejectedLorryIntegrationTest {
     @Test
     void millUsersRecordRejectedLorriesForTheirOwnMill() throws Exception {
         String sup = login("superadmin", "Admin@123");
-        JsonNode mill = call(post("/api/admin/mills"), sup, null, Map.of("name", "Reject Mill", "adminUsername", "reject_admin"), 201);
+        JsonNode mill = call(post("/api/admin/mills"), sup, null, Map.of("name", "Reject Mill", "adminUsername", "reject_admin", "location", "Nalgonda", "contactPhone", "9876543210", "adminFullName", "Mill Admin"), 201);
         long millId = mill.get("millId").asLong();
         String admin = login("reject_admin", mill.get("generatedPassword").asText());
-        JsonNode other = call(post("/api/admin/mills"), sup, null, Map.of("name", "Other Reject Mill", "adminUsername", "reject_other"), 201);
+        JsonNode other = call(post("/api/admin/mills"), sup, null, Map.of("name", "Other Reject Mill", "adminUsername", "reject_other", "location", "Nalgonda", "contactPhone", "9876543210", "adminFullName", "Mill Admin"), 201);
         String otherAdmin = login("reject_other", other.get("generatedPassword").asText());
         JsonNode stockBefore = call(get("/api/stock/summary"), admin, null, null, 200);
 

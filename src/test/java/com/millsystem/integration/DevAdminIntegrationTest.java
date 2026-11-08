@@ -51,8 +51,8 @@ class DevAdminIntegrationTest {
         assertThat(supers.toString()).doesNotContain("generatedPassword\":\"");
 
         // 2. The new super admin creates two mills.
-        JsonNode millA = call(post("/api/admin/mills"), superToken, Map.of("name", "Logo Mill A", "adminUsername", "logo_admin_a"), 201);
-        JsonNode millB = call(post("/api/admin/mills"), superToken, Map.of("name", "Logo Mill B", "adminUsername", "logo_admin_b"), 201);
+        JsonNode millA = call(post("/api/admin/mills"), superToken, Map.of("name", "Logo Mill A", "adminUsername", "logo_admin_a", "location", "Nalgonda", "contactPhone", "9876543210", "adminFullName", "Mill Admin"), 201);
+        JsonNode millB = call(post("/api/admin/mills"), superToken, Map.of("name", "Logo Mill B", "adminUsername", "logo_admin_b", "location", "Nalgonda", "contactPhone", "9876543210", "adminFullName", "Mill Admin"), 201);
         long idA = millA.get("millId").asLong();
         String adminA = login("logo_admin_a", millA.get("generatedPassword").asText());
         String adminB = login("logo_admin_b", millB.get("generatedPassword").asText());
@@ -103,7 +103,7 @@ class DevAdminIntegrationTest {
 
         JsonNode sup = call(post("/api/dev/super-admins"), dev, Map.of("username", "gone_super"), 201);
         String supToken = login("gone_super", sup.get("generatedPassword").asText());
-        JsonNode mill = call(post("/api/admin/mills"), supToken, Map.of("name", "Doomed Mill", "adminUsername", "doomed_admin"), 201);
+        JsonNode mill = call(post("/api/admin/mills"), supToken, Map.of("name", "Doomed Mill", "adminUsername", "doomed_admin", "location", "Nalgonda", "contactPhone", "9876543210", "adminFullName", "Mill Admin"), 201);
         long millId = mill.get("millId").asLong();
         String admin = login("doomed_admin", mill.get("generatedPassword").asText());
         JsonNode op = call(post("/api/mill/operators"), admin, Map.of("username", "doomed_op"), 201);

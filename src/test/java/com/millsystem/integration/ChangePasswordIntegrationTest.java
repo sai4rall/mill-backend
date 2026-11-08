@@ -30,7 +30,7 @@ class ChangePasswordIntegrationTest {
     @Test
     void changingPasswordSignsOutOtherSessionsAndKeepsThisOne() throws Exception {
         String superToken = login("superadmin", "Admin@123");
-        JsonNode mill = call(post("/api/admin/mills"), superToken, Map.of("name", "Password Mill", "adminUsername", "pw_admin"), 201);
+        JsonNode mill = call(post("/api/admin/mills"), superToken, Map.of("name", "Password Mill", "adminUsername", "pw_admin", "location", "Nalgonda", "contactPhone", "9876543210", "adminFullName", "Mill Admin"), 201);
         String original = mill.get("generatedPassword").asText();
         String tabA = login("pw_admin", original);
         Thread.sleep(1100); // JWT iat has second precision: make the "other session" clearly older than the change

@@ -46,7 +46,7 @@ class QaRegressionIntegrationTest {
     private MillCtx newMill() throws Exception {
         int n = SEQ.incrementAndGet();
         String superToken = login("superadmin", "Admin@123");
-        JsonNode mill = call(post("/api/admin/mills"), superToken, Map.of("name", "QA Mill " + n, "adminUsername", "qa_admin_" + n), 201);
+        JsonNode mill = call(post("/api/admin/mills"), superToken, Map.of("name", "QA Mill " + n, "adminUsername", "qa_admin_" + n, "location", "Nalgonda", "contactPhone", "9876543210", "adminFullName", "Mill Admin"), 201);
         String admin = login("qa_admin_" + n, mill.get("generatedPassword").asText());
         JsonNode op = call(post("/api/mill/operators"), admin, Map.of("username", "qa_op_" + n, "fullName", "Op"), 201);
         String operator = login("qa_op_" + n, op.get("generatedPassword").asText());
