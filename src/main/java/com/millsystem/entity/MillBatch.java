@@ -33,6 +33,38 @@ public class MillBatch {
     @Column(name = "conversion_rate", precision = 5, scale = 2)
     private BigDecimal conversionRate;
 
+    /** Duty shift that ran the batch (null for batches recorded before shifts existed). */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, columnDefinition = "VARCHAR(20)")
+    private Shift shift;
+
+    // By-products recorded when the batch is completed (optional). Only actualRiceQuintals counts as rice stock.
+    @Column(name = "broken_rice_quintals", precision = 10, scale = 2)
+    private BigDecimal brokenRiceQuintals;
+
+    @Column(name = "bran_quintals", precision = 10, scale = 2)
+    private BigDecimal branQuintals;
+
+    @Column(name = "husk_quintals", precision = 10, scale = 2)
+    private BigDecimal huskQuintals;
+
+    public Shift getShift() { return shift; }
+    public void setShift(Shift shift) { this.shift = shift; }
+    public BigDecimal getBrokenRiceQuintals() { return brokenRiceQuintals; }
+    public void setBrokenRiceQuintals(BigDecimal v) { this.brokenRiceQuintals = v; }
+    public BigDecimal getBranQuintals() { return branQuintals; }
+    public void setBranQuintals(BigDecimal v) { this.branQuintals = v; }
+    public BigDecimal getHuskQuintals() { return huskQuintals; }
+    public void setHuskQuintals(BigDecimal v) { this.huskQuintals = v; }
+
+    /** Paddy not accounted for by rice and recorded by-products (null until completed). */
+    public BigDecimal getUnaccountedQuintals() {
+        if (status != BatchStatus.COMPLETED || actualRiceQuintals == null) return null;
+        BigDecimal out = actualRiceQuintals;
+        for (BigDecimal v : new BigDecimal[]{brokenRiceQuintals, branQuintals, huskQuintals}) if (v != null) out = out.add(v);
+        return paddyInputQuintals.subtract(out);
+    }
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private BatchStatus status = BatchStatus.IN_PROGRESS;

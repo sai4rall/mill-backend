@@ -19,6 +19,16 @@ public class MillBatchDto {
     @PositiveOrZero @Digits(integer = 8, fraction = 2, message = "Quantity can have at most 8 digits and 2 decimal places")
     private BigDecimal actualRiceQuintals;
     private BigDecimal conversionRate;
+    /** Duty shift: MORNING, AFTERNOON or NIGHT. */
+    private com.millsystem.entity.Shift shift;
+    @PositiveOrZero @Digits(integer = 8, fraction = 2, message = "Quantity can have at most 8 digits and 2 decimal places")
+    private BigDecimal brokenRiceQuintals;
+    @PositiveOrZero @Digits(integer = 8, fraction = 2, message = "Quantity can have at most 8 digits and 2 decimal places")
+    private BigDecimal branQuintals;
+    @PositiveOrZero @Digits(integer = 8, fraction = 2, message = "Quantity can have at most 8 digits and 2 decimal places")
+    private BigDecimal huskQuintals;
+    /** Read-only: paddy in minus rice and by-products, once completed. */
+    private BigDecimal unaccountedQuintals;
     private MillBatch.BatchStatus status;
     @Size(max = 2000, message = "Must be at most 2000 characters")
     private String notes;
@@ -39,7 +49,9 @@ public class MillBatchDto {
         MillBatchDto dto = new MillBatchDto();
         dto.id = b.getId(); dto.batchDate = b.getBatchDate(); dto.paddyInputQuintals = b.getPaddyInputQuintals();
         dto.expectedRiceQuintals = b.getExpectedRiceQuintals(); dto.actualRiceQuintals = b.getActualRiceQuintals();
-        dto.conversionRate = b.getConversionRate(); dto.status = b.getStatus();
+        dto.conversionRate = b.getConversionRate(); dto.status = b.getStatus(); dto.shift = b.getShift();
+        dto.brokenRiceQuintals = b.getBrokenRiceQuintals(); dto.branQuintals = b.getBranQuintals(); dto.huskQuintals = b.getHuskQuintals();
+        dto.unaccountedQuintals = b.getUnaccountedQuintals();
         dto.notes = b.getNotes(); dto.createdAt = b.getCreatedAt();
         return dto;
     }
@@ -54,6 +66,15 @@ public class MillBatchDto {
     public BigDecimal getActualRiceQuintals() { return actualRiceQuintals; }
     public void setActualRiceQuintals(BigDecimal actualRiceQuintals) { this.actualRiceQuintals = actualRiceQuintals; }
     public BigDecimal getConversionRate() { return conversionRate; }
+    public com.millsystem.entity.Shift getShift() { return shift; }
+    public void setShift(com.millsystem.entity.Shift shift) { this.shift = shift; }
+    public BigDecimal getBrokenRiceQuintals() { return brokenRiceQuintals; }
+    public void setBrokenRiceQuintals(BigDecimal v) { this.brokenRiceQuintals = v; }
+    public BigDecimal getBranQuintals() { return branQuintals; }
+    public void setBranQuintals(BigDecimal v) { this.branQuintals = v; }
+    public BigDecimal getHuskQuintals() { return huskQuintals; }
+    public void setHuskQuintals(BigDecimal v) { this.huskQuintals = v; }
+    public BigDecimal getUnaccountedQuintals() { return unaccountedQuintals; }
     public MillBatch.BatchStatus getStatus() { return status; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }

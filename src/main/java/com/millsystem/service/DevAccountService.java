@@ -38,6 +38,7 @@ public class DevAccountService {
             new String[]{"shipments", "DELETE FROM export_shipments WHERE mill_id = ?"},
             new String[]{"orders", "DELETE FROM export_orders WHERE mill_id = ?"},
             new String[]{"customers", "DELETE FROM customers WHERE mill_id = ?"},
+            new String[]{"machine downtime", "DELETE FROM machine_downtime WHERE mill_id = ?"},
             new String[]{"rejected lorries", "DELETE FROM rejected_lorries WHERE mill_id = ?"},
             new String[]{"farmer photos", "DELETE FROM farmer_photos WHERE farmer_id IN (SELECT id FROM farmers WHERE mill_id = ?)"},
             new String[]{"farmers", "DELETE FROM farmers WHERE mill_id = ?"},
