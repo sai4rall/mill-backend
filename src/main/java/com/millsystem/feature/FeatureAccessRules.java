@@ -36,6 +36,8 @@ public class FeatureAccessRules {
             new Rule(null, "/api/moisture-deductions/**", Set.of(MOISTURE_DEDUCTION)),
 
             new Rule(null, "/api/mill-batches/**", Set.of(MILL_OPERATIONS)),
+            new Rule(null, "/api/downtime/**", Set.of(MILL_OPERATIONS)),
+            new Rule(null, "/api/production/**", Set.of(MILL_OPERATIONS)),
 
             // Export Orders and Shipments are served by the same screen.
             new Rule("GET", "/api/orders", Set.of(EXPORT_ORDERS, SHIPMENTS, DASHBOARD)),

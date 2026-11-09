@@ -64,6 +64,7 @@ public class MillBatchService {
         batch.setPaddyInputQuintals(dto.getPaddyInputQuintals());
         batch.setExpectedRiceQuintals(dto.getExpectedRiceQuintals());
         batch.setNotes(dto.getNotes());
+        batch.setShift(dto.getShift());
 
         // Optional links to the purchases the paddy came from (traceability). When given they must add up to the input
         // and stay within what each purchase has left.
@@ -111,6 +112,22 @@ public class MillBatchService {
             throw new IllegalArgumentException("Rice output (" + dto.getActualRiceQuintals().toPlainString()
                     + " Qtl) cannot exceed the paddy input (" + batch.getPaddyInputQuintals().toPlainString() + " Qtl)");
         }
+        // By-products are optional; together with the rice they cannot weigh more than the paddy that went in.
+        BigDecimal outputs = dto.getActualRiceQuintals();
+        for (BigDecimal v : new BigDecimal[]{dto.getBrokenRiceQuintals(), dto.getBranQuintals(), dto.getHuskQuintals()}) {
+            if (v != null) {
+                if (v.signum() < 0) throw new IllegalArgumentException("By-product quantities cannot be negative");
+                outputs = outputs.add(v);
+            }
+        }
+        if (outputs.compareTo(batch.getPaddyInputQuintals()) > 0) {
+            throw new IllegalArgumentException("Rice and by-products (" + outputs.stripTrailingZeros().toPlainString()
+                    + " Qtl) cannot exceed the paddy input (" + batch.getPaddyInputQuintals().toPlainString() + " Qtl)");
+        }
+        batch.setBrokenRiceQuintals(dto.getBrokenRiceQuintals());
+        batch.setBranQuintals(dto.getBranQuintals());
+        batch.setHuskQuintals(dto.getHuskQuintals());
+        if (dto.getShift() != null && batch.getShift() == null) batch.setShift(dto.getShift());
         batch.setActualRiceQuintals(dto.getActualRiceQuintals());
         if (batch.getPaddyInputQuintals().compareTo(BigDecimal.ZERO) > 0) {
             batch.setConversionRate(dto.getActualRiceQuintals()
