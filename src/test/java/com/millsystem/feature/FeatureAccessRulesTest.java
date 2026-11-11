@@ -28,6 +28,7 @@ class FeatureAccessRulesTest {
             // Shared lookup lists: readable while any screen using them is enabled.
             "GET,    /api/farmers,                       farmers|purchases",
             "GET,    /api/purchases,                     purchases|mill_operations|dashboard",
+            "GET,    /api/mill-batches,                  mill_operations|quality_control",
             "GET,    /api/orders,                        export_orders|shipments|dashboard",
             "GET,    /api/stock/summary,                 stock_report|dashboard",
             // Writes and details need the owning module.
@@ -42,6 +43,9 @@ class FeatureAccessRulesTest {
             "PUT,    /api/moisture-deductions,           moisture_deduction",
             "POST,   /api/mill-batches,                  mill_operations",
             "PUT,    /api/mill-batches/1/complete,       mill_operations",
+            "GET,    /api/quality/tests,                 quality_control",
+            "PUT,    /api/quality/standards/RICE,        quality_control",
+            "POST,   /api/quality/tests/3/certificate,   quality_control",
             "POST,   /api/orders,                        export_orders|shipments",
             "GET,    /api/customers,                     export_orders|shipments",
             "POST,   /api/shipments,                     export_orders|shipments",

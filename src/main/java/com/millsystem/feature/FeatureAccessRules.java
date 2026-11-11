@@ -35,6 +35,8 @@ public class FeatureAccessRules {
             new Rule(null, "/api/rejected-lorries/**", Set.of(PURCHASES)),
             new Rule(null, "/api/moisture-deductions/**", Set.of(MOISTURE_DEDUCTION)),
 
+            // The lab screen picks the batch a sample came from.
+            new Rule("GET", "/api/mill-batches", Set.of(MILL_OPERATIONS, QUALITY_CONTROL)),
             new Rule(null, "/api/mill-batches/**", Set.of(MILL_OPERATIONS)),
             new Rule(null, "/api/downtime/**", Set.of(MILL_OPERATIONS)),
             new Rule(null, "/api/production/**", Set.of(MILL_OPERATIONS)),
@@ -47,6 +49,8 @@ public class FeatureAccessRules {
 
             new Rule("GET", "/api/stock/summary", Set.of(STOCK_REPORT, DASHBOARD)),
             new Rule(null, "/api/stock/**", Set.of(STOCK_REPORT)),
+
+            new Rule(null, "/api/quality/**", Set.of(QUALITY_CONTROL)),
 
             new Rule(null, "/api/trucks/**", Set.of(TRUCK_TRACKING)),
             new Rule(null, "/api/mill/gps-key/**", Set.of(TRUCK_TRACKING)),
