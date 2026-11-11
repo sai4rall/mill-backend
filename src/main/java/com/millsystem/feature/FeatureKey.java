@@ -16,7 +16,9 @@ public enum FeatureKey {
     STOCK_REPORT("stock_report", "Stock Report"),
     OPERATORS("operators", "Operators"),
     // Moisture % on purchases and the moisture-based price deduction (plus its settings screens).
-    MOISTURE_DEDUCTION("moisture_deduction", "Moisture Deduction");
+    MOISTURE_DEDUCTION("moisture_deduction", "Moisture Deduction"),
+    // Lab tests, quality standards, batch-wise quality history and certificates.
+    QUALITY_CONTROL("quality_control", "Quality Control");
 
     private final String key;
     private final String label;
